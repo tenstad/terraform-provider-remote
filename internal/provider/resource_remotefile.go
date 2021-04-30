@@ -19,7 +19,7 @@ func resourceRemotefile() *schema.Resource {
 		DeleteContext: resourceRemotefileDelete,
 
 		Schema: map[string]*schema.Schema{
-			"connection": {
+			"conn": {
 				Type:        schema.TypeList,
 				Required:    true,
 				Description: "Connection to host where files are located.",

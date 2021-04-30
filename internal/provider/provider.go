@@ -57,7 +57,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 }
 
 func (c apiClient) fromResourceData(d *schema.ResourceData) (*apiClient, error) {
-	signer, err := ssh.ParsePrivateKey([]byte(d.Get("private_key").(string)))
+	signer, err := ssh.ParsePrivateKey([]byte(d.Get("conn.0.private_key").(string)))
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create a ssh client config: %s", err.Error())
@@ -65,13 +65,13 @@ func (c apiClient) fromResourceData(d *schema.ResourceData) (*apiClient, error) 
 
 	client := apiClient{
 		clientConfig: ssh.ClientConfig{
-			User: d.Get("username").(string),
+			User: d.Get("conn.0.username").(string),
 			Auth: []ssh.AuthMethod{
 				ssh.PublicKeys(signer),
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		},
-		host: fmt.Sprintf("%s:%d", d.Get("host").(string), d.Get("port").(int)),
+		host: fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int)),
 	}
 
 	return &client, nil

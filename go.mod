@@ -13,6 +13,7 @@ require (
 	github.com/hashicorp/go-plugin v1.4.1 // indirect
 	github.com/hashicorp/hcl/v2 v2.9.1 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.3.0
+	github.com/hashicorp/terraform-plugin-sdk v1.17.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
 	github.com/pkg/sftp v1.13.0
 	github.com/posener/complete v1.2.1 // indirect
