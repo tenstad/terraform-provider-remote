@@ -25,6 +25,11 @@ func TestAccResourceRemotefile(t *testing.T) {
 
 const testAccResourceRemotefile = `
 resource "remotefile" "foo" {
+  conn {
+	  host = "localhost"
+	  username = "root"
+	  private_key = ""
+  }
   path = "/tmp/foo.txt"
   content = "bar"
   permissions = "0777"

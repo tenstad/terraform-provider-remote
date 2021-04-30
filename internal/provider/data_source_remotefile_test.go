@@ -34,6 +34,11 @@ func TestAccDataSourceRemotefile(t *testing.T) {
 
 const testAccDataSourceRemotefile = `
 data "remotefile" "bar" {
+	conn {
+		host = "localhost"
+		username = "root"
+		private_key = ""
+	}
 	path = "/tmp/bar.txt"
 }
 `

@@ -20,6 +20,17 @@ func dataSourceRemotefile() *schema.Resource {
 				Description: "Connection to host where files are located.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"host": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The target host.",
+						},
+						"port": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Default:     22,
+							Description: "The ssh port to the target host.",
+						},
 						"username": {
 							Type:        schema.TypeString,
 							Required:    true,
@@ -30,16 +41,6 @@ func dataSourceRemotefile() *schema.Resource {
 							Required:    true,
 							Sensitive:   true,
 							Description: "The private key used to login to the target host.",
-						},
-						"host": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The target host.",
-						},
-						"port": {
-							Type:        schema.TypeInt,
-							Required:    true,
-							Description: "The ssh port to the target host.",
 						},
 					},
 				},
