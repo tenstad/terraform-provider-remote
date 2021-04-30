@@ -3,9 +3,6 @@ package provider
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"hash/fnv"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,30 +19,35 @@ func resourceRemotefile() *schema.Resource {
 		DeleteContext: resourceRemotefileDelete,
 
 		Schema: map[string]*schema.Schema{
-			"username": {
-				Type:        schema.TypeString,
+			"connection": {
+				Type:        schema.TypeList,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_USERNAME", nil),
-				Description: "The username on the target host. May alternatively be set via the `REMOTEFILE_USERNAME` environment variable.",
-			},
-			"private_key": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Sensitive:   true,
-				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PRIVATE_KEY", nil),
-				Description: "The private key used to login to target host. May alternatively be set via the `REMOTEFILE_PRIVATE_KEY` environment variable.",
-			},
-			"host": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_HOST", nil),
-				Description: "The target host where files are located. May alternatively be set via the `REMOTEFILE_HOST` environment variable.",
-			},
-			"port": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PORT", 22),
-				Description: "The ssh port to the target host. May alternatively be set via the `REMOTEFILE_PORT` environment variable.",
+				Description: "Connection to host where files are located.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"username": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The username on the target host.",
+						},
+						"private_key": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Sensitive:   true,
+							Description: "The private key used to login to the target host.",
+						},
+						"host": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The target host.",
+						},
+						"port": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "The ssh port to the target host.",
+						},
+					},
+				},
 			},
 			"path": {
 				Description: "Path to file on remote host.",
@@ -70,9 +72,7 @@ func resourceRemotefile() *schema.Resource {
 func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*apiClient)
 
-	h := fnv.New32a()
-	h.Write([]byte(fmt.Sprintf("%s @ %s", d.Get("content"), d.Get("path"))))
-	d.SetId(strconv.Itoa(int(h.Sum32())))
+	d.SetId(d.Get("path").(string))
 
 	resourceClient, err := client.fromResourceData(d)
 	if err != nil {
