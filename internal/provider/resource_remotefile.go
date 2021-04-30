@@ -28,11 +28,12 @@ func resourceRemotefile() *schema.Resource {
 				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_USERNAME", nil),
 				Description: "The username on the target host. May alternatively be set via the `REMOTEFILE_USERNAME` environment variable.",
 			},
-			"private_key_path": {
+			"private_key": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PRIVATE_KEY_PATH", nil),
-				Description: "The path to the private key used to login to target host. May alternatively be set via the `REMOTEFILE_PRIVATE_KEY_PATH` environment variable.",
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PRIVATE_KEY", nil),
+				Description: "The private key used to login to target host. May alternatively be set via the `REMOTEFILE_PRIVATE_KEY` environment variable.",
 			},
 			"host": {
 				Type:        schema.TypeString,

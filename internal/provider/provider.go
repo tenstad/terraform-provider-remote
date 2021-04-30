@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bramvdbogaerde/go-scp"
-	"github.com/bramvdbogaerde/go-scp/auth"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/sftp"
@@ -58,14 +57,21 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 }
 
 func (c apiClient) fromResourceData(d *schema.ResourceData) (*apiClient, error) {
-	clientConfig, err := auth.PrivateKey(d.Get("username").(string), d.Get("private_key_path").(string), ssh.InsecureIgnoreHostKey())
+	signer, err := ssh.ParsePrivateKey([]byte(d.Get("private_key").(string)))
+
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create a ssh client config: %s", err.Error())
 	}
 
 	client := apiClient{
-		clientConfig: clientConfig,
-		host:         fmt.Sprintf("%s:%d", d.Get("host").(string), d.Get("port").(int)),
+		clientConfig: ssh.ClientConfig{
+			User: d.Get("username").(string),
+			Auth: []ssh.AuthMethod{
+				ssh.PublicKeys(signer),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		},
+		host: fmt.Sprintf("%s:%d", d.Get("host").(string), d.Get("port").(int)),
 	}
 
 	return &client, nil
