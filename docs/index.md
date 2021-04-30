@@ -10,7 +10,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-provider "scaffolding" {
+provider "remotefile" {
   username = "foo"
   private_key_path = "~/.ssh/id_rsa"
   host = "foo.com"

@@ -1,18 +1,18 @@
 ---
-page_title: "remotefile_data_source Data Source - terraform-provider-remotefile"
+page_title: "remotefile Data Source - terraform-provider-remotefile"
 subcategory: ""
 description: |-
   Remote file datasource.
 ---
 
-# Data Source `remotefile_data_source`
+# Data Source `remotefile`
 
   Remote file datasource.
 
 ## Example Usage
 
 ```terraform
-data "remotefile_data_source" "bar" {
+data "remotefile" "bar" {
 	path = "/tmp/bar.txt"
 }
 ```

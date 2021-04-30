@@ -22,6 +22,30 @@ func resourceRemotefile() *schema.Resource {
 		DeleteContext: resourceRemotefileDelete,
 
 		Schema: map[string]*schema.Schema{
+			"username": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_USERNAME", nil),
+				Description: "The username on the target host. May alternatively be set via the `REMOTEFILE_USERNAME` environment variable.",
+			},
+			"private_key_path": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PRIVATE_KEY_PATH", nil),
+				Description: "The path to the private key used to login to target host. May alternatively be set via the `REMOTEFILE_PRIVATE_KEY_PATH` environment variable.",
+			},
+			"host": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_HOST", nil),
+				Description: "The target host where files are located. May alternatively be set via the `REMOTEFILE_HOST` environment variable.",
+			},
+			"port": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PORT", 22),
+				Description: "The ssh port to the target host. May alternatively be set via the `REMOTEFILE_PORT` environment variable.",
+			},
 			"path": {
 				Description: "Path to file on remote host.",
 				Type:        schema.TypeString,
@@ -49,7 +73,12 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	h.Write([]byte(fmt.Sprintf("%s @ %s", d.Get("content"), d.Get("path"))))
 	d.SetId(strconv.Itoa(int(h.Sum32())))
 
-	scpClient, err := client.getSCPClient()
+	resourceClient, err := client.fromResourceData(d)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
+
+	scpClient, err := resourceClient.getSCPClient()
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
@@ -67,7 +96,12 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*apiClient)
 
-	sftpClient, err := client.getSFTPClient()
+	resourceClient, err := client.fromResourceData(d)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
+
+	sftpClient, err := resourceClient.getSFTPClient()
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
@@ -98,7 +132,12 @@ func resourceRemotefileUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*apiClient)
 
-	sftpClient, err := client.getSFTPClient()
+	resourceClient, err := client.fromResourceData(d)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
+
+	sftpClient, err := resourceClient.getSFTPClient()
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}

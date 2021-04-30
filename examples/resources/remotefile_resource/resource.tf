@@ -1,4 +1,4 @@
-resource "remotefile_resource" "foo" {
+resource "remotefile" "foo" {
   path = "/tmp/foo.txt"
   content = "bar"
   permissions = "0777"

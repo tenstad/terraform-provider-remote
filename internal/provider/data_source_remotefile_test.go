@@ -25,7 +25,7 @@ func TestAccDataSourceRemotefile(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
 						// TODO: check content is correct
-						"data.remotefile_data_source.bar", "content", regexp.MustCompile("")),
+						"data.remotefile.bar", "content", regexp.MustCompile("")),
 				),
 			},
 		},
@@ -33,7 +33,7 @@ func TestAccDataSourceRemotefile(t *testing.T) {
 }
 
 const testAccDataSourceRemotefile = `
-data "remotefile_data_source" "bar" {
+data "remotefile" "bar" {
 	path = "/tmp/bar.txt"
 }
 `

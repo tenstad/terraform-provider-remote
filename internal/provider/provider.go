@@ -32,37 +32,12 @@ func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			DataSourcesMap: map[string]*schema.Resource{
-				"remotefile_data_source": dataSourceRemotefile(),
+				"remotefile": dataSourceRemotefile(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"remotefile_resource": resourceRemotefile(),
+				"remotefile": resourceRemotefile(),
 			},
-			Schema: map[string]*schema.Schema{
-				"username": {
-					Type:        schema.TypeString,
-					Required:    true,
-					DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_USERNAME", nil),
-					Description: "The username on the target host. May alternatively be set via the `REMOTEFILE_USERNAME` environment variable.",
-				},
-				"private_key_path": {
-					Type:        schema.TypeString,
-					Required:    true,
-					DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PRIVATE_KEY_PATH", nil),
-					Description: "The path to the private key used to login to target host. May alternatively be set via the `REMOTEFILE_PRIVATE_KEY_PATH` environment variable.",
-				},
-				"host": {
-					Type:        schema.TypeString,
-					Required:    true,
-					DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_HOST", nil),
-					Description: "The target host where files are located. May alternatively be set via the `REMOTEFILE_HOST` environment variable.",
-				},
-				"port": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("REMOTEFILE_PORT", 22),
-					Description: "The ssh port to the target host. May alternatively be set via the `REMOTEFILE_PORT` environment variable.",
-				},
-			},
+			Schema: map[string]*schema.Schema{},
 		}
 
 		p.ConfigureContextFunc = configure(version, p)
@@ -78,18 +53,22 @@ type apiClient struct {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(c context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		clientConfig, err := auth.PrivateKey(d.Get("username").(string), d.Get("private_key_path").(string), ssh.InsecureIgnoreHostKey())
-		if err != nil {
-			return nil, diag.Errorf("couldn't create a ssh client config: %s", err.Error())
-		}
-
-		client := apiClient{
-			clientConfig: clientConfig,
-			host:         fmt.Sprintf("%s:%d", d.Get("host").(string), d.Get("port").(int)),
-		}
-
-		return &client, nil
+		return &apiClient{}, diag.Diagnostics{}
 	}
+}
+
+func (c apiClient) fromResourceData(d *schema.ResourceData) (*apiClient, error) {
+	clientConfig, err := auth.PrivateKey(d.Get("username").(string), d.Get("private_key_path").(string), ssh.InsecureIgnoreHostKey())
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create a ssh client config: %s", err.Error())
+	}
+
+	client := apiClient{
+		clientConfig: clientConfig,
+		host:         fmt.Sprintf("%s:%d", d.Get("host").(string), d.Get("port").(int)),
+	}
+
+	return &client, nil
 }
 
 func (c apiClient) getSSHClient() (*ssh.Client, error) {

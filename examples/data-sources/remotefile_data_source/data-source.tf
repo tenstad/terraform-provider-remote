@@ -1,3 +1,3 @@
-data "remotefile_data_source" "bar" {
+data "remotefile" "bar" {
 	path = "/tmp/bar.txt"
 }

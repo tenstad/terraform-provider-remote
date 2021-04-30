@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,14 +25,4 @@ func testAccPreCheck(t *testing.T) {
 	// You can add code here to run prior to any test case execution, for example assertions
 	// about the appropriate environment variables being set are common to see in a pre-check
 	// function.
-
-	if v := os.Getenv("REMOTEFILE_USERNAME"); v == "" {
-		t.Fatal("REMOTEFILE_USERNAME must be set")
-	}
-	if v := os.Getenv("REMOTEFILE_PRIVATE_KEY_PATH"); v == "" {
-		t.Fatal("REMOTEFILE_PRIVATE_KEY_PATH must be set")
-	}
-	if v := os.Getenv("REMOTEFILE_HOST"); v == "" {
-		t.Fatal("REMOTEFILE_HOST must be set")
-	}
 }

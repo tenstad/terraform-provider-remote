@@ -1,18 +1,18 @@
 ---
-page_title: "remotefile_resource Resource - terraform-provider-remotefile"
+page_title: "remotefile Resource - terraform-provider-remotefile"
 subcategory: ""
 description: |-
   File on remote host.
 ---
 
-# Resource `remotefile_resource`
+# Resource `remotefile`
 
 File on remote host.
 
 ## Example Usage
 
 ```terraform
-resource "remotefile_resource" "foo" {
+resource "remotefile" "foo" {
   path = "/tmp/foo.txt"
   content = "bar"
   permissions = "0777"

@@ -16,7 +16,7 @@ func TestAccResourceRemotefile(t *testing.T) {
 				Config: testAccResourceRemotefile,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"remotefile_resource.foo", "content", regexp.MustCompile("bar")),
+						"remotefile.foo", "content", regexp.MustCompile("bar")),
 				),
 			},
 		},
@@ -24,7 +24,7 @@ func TestAccResourceRemotefile(t *testing.T) {
 }
 
 const testAccResourceRemotefile = `
-resource "remotefile_resource" "foo" {
+resource "remotefile" "foo" {
   path = "/tmp/foo.txt"
   content = "bar"
   permissions = "0777"
