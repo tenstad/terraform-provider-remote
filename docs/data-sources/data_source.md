@@ -1,19 +1,19 @@
 ---
-page_title: "scaffolding_data_source Data Source - terraform-provider-scaffolding"
+page_title: "remotefile_data_source Data Source - terraform-provider-remotefile"
 subcategory: ""
 description: |-
-  Sample data source in the Terraform provider scaffolding.
+  Remote file datasource.
 ---
 
-# Data Source `scaffolding_data_source`
+# Data Source `remotefile_data_source`
 
-Sample data source in the Terraform provider scaffolding.
+  Remote file datasource.
 
 ## Example Usage
 
 ```terraform
-data "scaffolding_data_source" "example" {
-  sample_attribute = "foo"
+data "remotefile_data_source" "bar" {
+	path = "/tmp/bar.txt"
 }
 ```
 
@@ -21,10 +21,8 @@ data "scaffolding_data_source" "example" {
 
 ### Required
 
-- **sample_attribute** (String, Required) Sample attribute.
+- **path** (String, Required) Path to file on remote host.
 
 ### Optional
 
-- **id** (String, Optional) The ID of this resource.
-
-
+- *none*

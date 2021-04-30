@@ -1,19 +1,20 @@
 ---
-page_title: "scaffolding Provider"
+page_title: "remotefile Provider"
 subcategory: ""
 description: |-
-  
+  Mangae files on remote hosts
 ---
 
-# scaffolding Provider
-
-
+# remotefile Provider
 
 ## Example Usage
 
 ```terraform
 provider "scaffolding" {
-  # example configuration here
+  username = "foo"
+  private_key_path = "~/.ssh/id_rsa"
+  host = "foo.com"
+  port = "22"
 }
 ```
 

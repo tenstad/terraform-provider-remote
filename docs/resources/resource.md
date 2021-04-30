@@ -1,27 +1,32 @@
 ---
-page_title: "scaffolding_resource Resource - terraform-provider-scaffolding"
+page_title: "remotefile_resource Resource - terraform-provider-remotefile"
 subcategory: ""
 description: |-
-  Sample resource in the Terraform provider scaffolding.
+  File on remote host.
 ---
 
-# Resource `scaffolding_resource`
+# Resource `remotefile_resource`
 
-Sample resource in the Terraform provider scaffolding.
+File on remote host.
 
 ## Example Usage
 
 ```terraform
-resource "scaffolding_resource" "example" {
-  sample_attribute = "foo"
+resource "remotefile_resource" "foo" {
+  path = "/tmp/foo.txt"
+  content = "bar"
+  permissions = "0777"
 }
+
 ```
 
 ## Schema
 
+### Required
+
+- **path** (String, Required) Path to file on remote host.
+- **content** (String, Required) Content of file on remote host.
+
 ### Optional
 
-- **id** (String, Optional) The ID of this resource.
-- **sample_attribute** (String, Optional) Sample attribute.
-
-
+- **permissions** (String, Optional) The file permissions.
