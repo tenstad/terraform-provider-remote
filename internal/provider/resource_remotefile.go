@@ -41,11 +41,21 @@ func resourceRemotefile() *schema.Resource {
 							Required:    true,
 							Description: "The username on the target host.",
 						},
+						"password": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The pasword for the user on the target host.",
+						},
 						"private_key": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Sensitive:   true,
 							Description: "The private key used to login to the target host.",
+						},
+						"private_key_path": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The path of the private key used to login to the target host.",
 						},
 					},
 				},

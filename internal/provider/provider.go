@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -57,21 +58,41 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 }
 
 func (c apiClient) fromResourceData(d *schema.ResourceData) (*apiClient, error) {
-	signer, err := ssh.ParsePrivateKey([]byte(d.Get("conn.0.private_key").(string)))
+	clientConfig := ssh.ClientConfig{
+		User:            d.Get("conn.0.username").(string),
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
 
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create a ssh client config: %s", err.Error())
+	password, ok := d.GetOk("conn.0.password")
+	if ok {
+		clientConfig.Auth = append(clientConfig.Auth, ssh.Password(password.(string)))
+	}
+
+	private_key, ok := d.GetOk("conn.0.private_key")
+	if ok {
+		signer, err := ssh.ParsePrivateKey([]byte(private_key.(string)))
+		if err != nil {
+			return nil, fmt.Errorf("couldn't create a ssh client config from private key: %s", err.Error())
+		}
+		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
+	}
+
+	private_key_path, ok := d.GetOk("conn.0.private_key_path")
+	if ok {
+		content, err := ioutil.ReadFile(private_key_path.(string))
+		if err != nil {
+			return nil, fmt.Errorf("couldn't read private key: %s", err.Error())
+		}
+		signer, err := ssh.ParsePrivateKey(content)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't create a ssh client config from private key file: %s", err.Error())
+		}
+		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
 	client := apiClient{
-		clientConfig: ssh.ClientConfig{
-			User: d.Get("conn.0.username").(string),
-			Auth: []ssh.AuthMethod{
-				ssh.PublicKeys(signer),
-			},
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		},
-		host: fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int)),
+		clientConfig: clientConfig,
+		host:         fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int)),
 	}
 
 	return &client, nil
