@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"io/ioutil"
 	"regexp"
 	"testing"
 
@@ -15,12 +14,6 @@ func TestAccDataSourceRemotefile(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				PreConfig: func() {
-					err := ioutil.WriteFile("/tmp/bar.txt", []byte("baz"), 0777)
-					if err != nil {
-						t.Fatal("unable to create test file to read")
-					}
-				},
 				Config: testAccDataSourceRemotefile,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
@@ -37,7 +30,8 @@ data "remotefile" "bar" {
 	conn {
 		host = "localhost"
 		username = "root"
-		private_key = ""
+		private_key_path = "../../tests/key"
+		port = 8022
 	}
 	path = "/tmp/bar.txt"
 }

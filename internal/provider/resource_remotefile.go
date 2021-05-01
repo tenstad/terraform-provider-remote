@@ -3,6 +3,7 @@ package provider
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -44,6 +45,7 @@ func resourceRemotefile() *schema.Resource {
 						"password": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Sensitive:   true,
 							Description: "The pasword for the user on the target host.",
 						},
 						"private_key": {
@@ -81,16 +83,14 @@ func resourceRemotefile() *schema.Resource {
 }
 
 func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*apiClient)
+	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), d.Get("path").(string)))
 
-	d.SetId(d.Get("path").(string))
-
-	resourceClient, err := client.fromResourceData(d)
+	client, err := newClient(d)
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
 
-	scpClient, err := resourceClient.getSCPClient()
+	scpClient, err := client.getSCPClient()
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
@@ -106,14 +106,14 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*apiClient)
+	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), d.Get("path").(string)))
 
-	resourceClient, err := client.fromResourceData(d)
+	client, err := newClient(d)
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
 
-	sftpClient, err := resourceClient.getSFTPClient()
+	sftpClient, err := client.getSFTPClient()
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
@@ -142,14 +142,12 @@ func resourceRemotefileUpdate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*apiClient)
-
-	resourceClient, err := client.fromResourceData(d)
+	client, err := newClient(d)
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
 
-	sftpClient, err := resourceClient.getSFTPClient()
+	sftpClient, err := client.getSFTPClient()
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}

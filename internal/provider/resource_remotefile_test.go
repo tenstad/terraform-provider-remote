@@ -28,7 +28,8 @@ resource "remotefile" "foo" {
   conn {
 	  host = "localhost"
 	  username = "root"
-	  private_key = ""
+	  password = "password"
+	  port = 8022
   }
   path = "/tmp/foo.txt"
   content = "bar"

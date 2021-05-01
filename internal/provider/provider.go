@@ -57,7 +57,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 	}
 }
 
-func (c apiClient) fromResourceData(d *schema.ResourceData) (*apiClient, error) {
+func newClient(d *schema.ResourceData) (*apiClient, error) {
 	clientConfig := ssh.ClientConfig{
 		User:            d.Get("conn.0.username").(string),
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),

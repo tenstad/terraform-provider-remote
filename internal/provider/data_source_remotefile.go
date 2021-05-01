@@ -39,6 +39,7 @@ func dataSourceRemotefile() *schema.Resource {
 						"password": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Sensitive:   true,
 							Description: "The pasword for the user on the target host.",
 						},
 						"private_key": {
@@ -65,9 +66,5 @@ func dataSourceRemotefile() *schema.Resource {
 }
 
 func dataSourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := resourceRemotefileRead(ctx, d, meta)
-
-	d.SetId(d.Get("path").(string))
-
-	return err
+	return resourceRemotefileRead(ctx, d, meta)
 }
