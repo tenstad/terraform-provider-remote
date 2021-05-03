@@ -201,9 +201,7 @@ func (c *apiClient) fileExistsSudo(d *schema.ResourceData) (bool, error) {
 		defer session2.Close()
 
 		cmd := fmt.Sprintf("test ! -f %s", path)
-		err = session2.Run(cmd)
-
-		return false, err
+		return false, session2.Run(cmd)
 	}
 
 	return true, nil
