@@ -203,7 +203,7 @@ func (c *apiClient) fileExistsSudo(d *schema.ResourceData) (bool, error) {
 		cmd := fmt.Sprintf("test ! -f %s", path)
 		err = session2.Run(cmd)
 
-		return err != nil, err
+		return false, err
 	}
 
 	return true, nil
