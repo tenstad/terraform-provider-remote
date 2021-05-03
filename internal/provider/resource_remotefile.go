@@ -27,6 +27,7 @@ func resourceRemotefile() *schema.Resource {
 						"host": {
 							Type:        schema.TypeString,
 							Required:    true,
+							ForceNew:    true,
 							Description: "The target host.",
 						},
 						"port": {
@@ -69,16 +70,19 @@ func resourceRemotefile() *schema.Resource {
 			"path": {
 				Description: "Path to file on remote host.",
 				Type:        schema.TypeString,
+				ForceNew:    true,
 				Required:    true,
 			},
 			"content": {
 				Description: "Content of file.",
 				Type:        schema.TypeString,
+				ForceNew:    true,
 				Required:    true,
 			},
 			"permissions": {
 				Description: "Permissions of file.",
 				Type:        schema.TypeString,
+				ForceNew:    true,
 				Default:     "0644",
 				Optional:    true,
 			},
@@ -124,14 +128,22 @@ func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	sudo, ok := d.GetOk("conn.0.sudo")
 	if ok && sudo.(bool) {
-		err := client.readFileSudo(d)
+		exists, err := client.fileExistsSudo(d)
 		if err != nil {
-			return diag.Errorf("error while removing remote file with sudo: %s", err.Error())
+			return diag.Errorf("error while checking if remote file exists with sudo: %s", err.Error())
+		}
+		if exists {
+			err := client.readFileSudo(d)
+			if err != nil {
+				return diag.Errorf("error while reading remote file with sudo: %s", err.Error())
+			}
+		} else {
+			return diag.Errorf("cannot read file, it does not exist.")
 		}
 	} else {
 		err := client.readFile(d)
 		if err != nil {
-			return diag.Errorf("error while removing remote file: %s", err.Error())
+			return diag.Errorf("error while reading remote file: %s", err.Error())
 		}
 	}
 
@@ -150,9 +162,17 @@ func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta 
 
 	sudo, ok := d.GetOk("conn.0.sudo")
 	if ok && sudo.(bool) {
-		err := client.deleteFileSudo(d)
+		exists, err := client.fileExistsSudo(d)
 		if err != nil {
-			return diag.Errorf("error while removing remote file with sudo: %s", err.Error())
+			return diag.Errorf("error while checking if remote file exists with sudo: %s", err.Error())
+		}
+		if exists {
+			err := client.deleteFileSudo(d)
+			if err != nil {
+				return diag.Errorf("error while removing remote file with sudo: %s", err.Error())
+			}
+		} else {
+			return diag.Errorf("cannot delete file, it does not exist.")
 		}
 	} else {
 		err := client.deleteFile(d)

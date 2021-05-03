@@ -133,7 +133,7 @@ func (c *apiClient) writeFileSudo(d *schema.ResourceData) error {
 		stdin.Close()
 	}()
 
-	cmd := fmt.Sprint("cat /dev/stdin | sudo tee ", d.Get("path").(string))
+	cmd := fmt.Sprintf("cat /dev/stdin | sudo tee %s", d.Get("path").(string))
 	return session.Run(cmd)
 }
 
@@ -177,6 +177,38 @@ func (c *apiClient) readFile(d *schema.ResourceData) error {
 	return nil
 }
 
+func (c *apiClient) fileExistsSudo(d *schema.ResourceData) (bool, error) {
+	sshClient, err := c.getSSHClient()
+	if err != nil {
+		return false, err
+	}
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return false, err
+	}
+	defer session.Close()
+
+	path := d.Get("path").(string)
+	cmd := fmt.Sprintf("test -f %s", path)
+	err = session.Run(cmd)
+
+	if err != nil {
+		session2, err := sshClient.NewSession()
+		if err != nil {
+			return false, err
+		}
+		defer session2.Close()
+
+		cmd := fmt.Sprintf("test ! -f %s", path)
+		err = session2.Run(cmd)
+
+		return err == nil, err
+	}
+
+	return true, nil
+}
+
 func (c *apiClient) readFileSudo(d *schema.ResourceData) error {
 	sshClient, err := c.getSSHClient()
 	if err != nil {
@@ -189,7 +221,7 @@ func (c *apiClient) readFileSudo(d *schema.ResourceData) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprint("sudo cat ", d.Get("path").(string))
+	cmd := fmt.Sprintf("sudo cat %s", d.Get("path").(string))
 	content, err := session.Output(cmd)
 	if err != nil {
 		return err
@@ -221,7 +253,7 @@ func (c *apiClient) deleteFileSudo(d *schema.ResourceData) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprint("sudo cat ", d.Get("path").(string))
+	cmd := fmt.Sprintf("sudo cat %s", d.Get("path").(string))
 	return session.Run(cmd)
 }
 

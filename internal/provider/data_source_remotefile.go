@@ -23,6 +23,7 @@ func dataSourceRemotefile() *schema.Resource {
 						"host": {
 							Type:        schema.TypeString,
 							Required:    true,
+							ForceNew:    true,
 							Description: "The target host.",
 						},
 						"port": {
@@ -65,6 +66,7 @@ func dataSourceRemotefile() *schema.Resource {
 			"path": {
 				Description: "Path to file on remote host.",
 				Type:        schema.TypeString,
+				ForceNew:    true,
 				Required:    true,
 			},
 		},
