@@ -1,10 +1,8 @@
 package provider
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -41,6 +39,12 @@ func resourceRemotefile() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The username on the target host.",
+						},
+						"sudo": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Use sudo to gain access to read/write file.",
 						},
 						"password": {
 							Type:        schema.TypeString,
@@ -90,16 +94,21 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
-	scpClient, err := client.getSCPClient()
-	if err != nil {
-		return diag.Errorf(err.Error())
-	}
-	defer scpClient.Close()
-
-	err = scpClient.CopyFile(strings.NewReader(d.Get("content").(string)), d.Get("path").(string), d.Get("permissions").(string))
-
-	if err != nil {
-		return diag.Errorf("error while copying file: %s", err.Error())
+	sudo, ok := d.GetOk("conn.0.sudo")
+	if ok && sudo.(bool) {
+		err := client.writeFileSudo(d)
+		if err != nil {
+			return diag.Errorf("error while creating remote file with sudo: %s", err.Error())
+		}
+		err = client.chmodFileSudo(d)
+		if err != nil {
+			return diag.Errorf("error while changing permissions of remote file with sudo: %s", err.Error())
+		}
+	} else {
+		err := client.writeFile(d)
+		if err != nil {
+			return diag.Errorf("error while creating remote file: %s", err.Error())
+		}
 	}
 
 	return diag.Diagnostics{}
@@ -113,26 +122,18 @@ func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf(err.Error())
 	}
 
-	sftpClient, err := client.getSFTPClient()
-	if err != nil {
-		return diag.Errorf(err.Error())
+	sudo, ok := d.GetOk("conn.0.sudo")
+	if ok && sudo.(bool) {
+		err := client.readFileSudo(d)
+		if err != nil {
+			return diag.Errorf("error while removing remote file with sudo: %s", err.Error())
+		}
+	} else {
+		err := client.readFile(d)
+		if err != nil {
+			return diag.Errorf("error while removing remote file: %s", err.Error())
+		}
 	}
-	defer sftpClient.Close()
-
-	file, err := sftpClient.Open(d.Get("path").(string))
-	if err != nil {
-		return diag.Errorf("error while opening remote file: %s", err.Error())
-	}
-	defer file.Close()
-
-	content := bytes.Buffer{}
-	_, err = file.WriteTo(&content)
-
-	if err != nil {
-		return diag.Errorf("error while reading remote file: %s", err.Error())
-	}
-
-	d.Set("content", string(content.String()))
 
 	return diag.Diagnostics{}
 }
@@ -147,15 +148,17 @@ func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
-	sftpClient, err := client.getSFTPClient()
-	if err != nil {
-		return diag.Errorf(err.Error())
-	}
-	defer sftpClient.Close()
-
-	err = sftpClient.Remove(d.Get("path").(string))
-	if err != nil {
-		return diag.Errorf("error while removing remote file: %s", err.Error())
+	sudo, ok := d.GetOk("conn.0.sudo")
+	if ok && sudo.(bool) {
+		err := client.deleteFileSudo(d)
+		if err != nil {
+			return diag.Errorf("error while removing remote file with sudo: %s", err.Error())
+		}
+	} else {
+		err := client.deleteFile(d)
+		if err != nil {
+			return diag.Errorf("error while removing remote file: %s", err.Error())
+		}
 	}
 
 	return diag.Diagnostics{}

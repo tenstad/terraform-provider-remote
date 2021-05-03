@@ -36,6 +36,12 @@ func dataSourceRemotefile() *schema.Resource {
 							Required:    true,
 							Description: "The username on the target host.",
 						},
+						"sudo": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Use sudo to gain access to read file.",
+						},
 						"password": {
 							Type:        schema.TypeString,
 							Optional:    true,

@@ -1,8 +1,9 @@
 FROM alpine:latest
 
 RUN apk add --no-cache \
-    openssh \
     bash \
+    openssh \
+    sudo \
     && ssh-keygen -A \
     && sed -i "s/#\?PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config \
     && mkdir /root/.ssh \

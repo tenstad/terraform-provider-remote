@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -96,6 +98,131 @@ func newClient(d *schema.ResourceData) (*apiClient, error) {
 	}
 
 	return &client, nil
+}
+
+func (c *apiClient) writeFile(d *schema.ResourceData) error {
+	scpClient, err := c.getSCPClient()
+	if err != nil {
+		return err
+	}
+	defer scpClient.Close()
+
+	return scpClient.CopyFile(strings.NewReader(d.Get("content").(string)), d.Get("path").(string), d.Get("permissions").(string))
+}
+
+func (c *apiClient) writeFileSudo(d *schema.ResourceData) error {
+	sshClient, err := c.getSSHClient()
+	if err != nil {
+		return err
+	}
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	stdin, err := session.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	content := d.Get("content").(string)
+	go func() {
+		stdin.Write([]byte(content))
+		stdin.Close()
+	}()
+
+	cmd := fmt.Sprint("cat /dev/stdin | sudo tee ", d.Get("path").(string))
+	return session.Run(cmd)
+}
+
+func (c *apiClient) chmodFileSudo(d *schema.ResourceData) error {
+	sshClient, err := c.getSSHClient()
+	if err != nil {
+		return err
+	}
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("sudo chmod %s %s", d.Get("permissions").(string), d.Get("path").(string))
+	return session.Run(cmd)
+}
+
+func (c *apiClient) readFile(d *schema.ResourceData) error {
+	sftpClient, err := c.getSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	file, err := sftpClient.Open(d.Get("path").(string))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	content := bytes.Buffer{}
+	_, err = file.WriteTo(&content)
+
+	if err != nil {
+		return err
+	}
+
+	d.Set("content", string(content.String()))
+	return nil
+}
+
+func (c *apiClient) readFileSudo(d *schema.ResourceData) error {
+	sshClient, err := c.getSSHClient()
+	if err != nil {
+		return err
+	}
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprint("sudo cat ", d.Get("path").(string))
+	content, err := session.Output(cmd)
+	if err != nil {
+		return err
+	}
+
+	d.Set("content", string(content))
+	return nil
+}
+
+func (c *apiClient) deleteFile(d *schema.ResourceData) error {
+	sftpClient, err := c.getSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	return sftpClient.Remove(d.Get("path").(string))
+}
+
+func (c *apiClient) deleteFileSudo(d *schema.ResourceData) error {
+	sshClient, err := c.getSSHClient()
+	if err != nil {
+		return err
+	}
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprint("sudo cat ", d.Get("path").(string))
+	return session.Run(cmd)
 }
 
 func (c apiClient) getSSHClient() (*ssh.Client, error) {
