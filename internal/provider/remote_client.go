@@ -151,7 +151,7 @@ func (c *RemoteClient) DeleteFileSudo(d *schema.ResourceData) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprintf("sudo cat %s", d.Get("path").(string))
+	cmd := fmt.Sprintf("sudo rm %s", d.Get("path").(string))
 	return session.Run(cmd)
 }
 
