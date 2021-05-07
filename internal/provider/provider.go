@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -111,6 +112,16 @@ func RemoteClientFromResource(d *schema.ResourceData) (*RemoteClient, error) {
 		signer, err := ssh.ParsePrivateKey(content)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't create a ssh client config from private key file: %s", err.Error())
+		}
+		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
+	}
+
+	private_key_env_var, ok := d.GetOk("conn.0.private_key_env_var")
+	if ok {
+		private_key := os.Getenv(private_key_env_var.(string))
+		signer, err := ssh.ParsePrivateKey([]byte(private_key))
+		if err != nil {
+			return nil, fmt.Errorf("couldn't create a ssh client config from private key env var: %s", err.Error())
 		}
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}

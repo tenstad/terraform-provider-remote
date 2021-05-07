@@ -60,6 +60,11 @@ func dataSourceRemotefile() *schema.Resource {
 							Optional:    true,
 							Description: "The path of the private key used to login to the target host.",
 						},
+						"private_key_env_var": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The env var of the private key used to login to the target host.",
+						},
 					},
 				},
 			},
