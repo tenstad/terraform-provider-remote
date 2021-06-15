@@ -100,7 +100,7 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
-		return diag.Errorf(err.Error())
+		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
 	sudo, ok := d.GetOk("conn.0.sudo")
@@ -120,6 +120,11 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
+	err = meta.(*apiClient).closeRemoteClient(d)
+	if err != nil {
+		return diag.Errorf("error while closing remote client: %s", err.Error())
+	}
+
 	return diag.Diagnostics{}
 }
 
@@ -128,7 +133,7 @@ func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
-		return diag.Errorf(err.Error())
+		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
 	sudo, ok := d.GetOk("conn.0.sudo")
@@ -152,6 +157,11 @@ func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta in
 		}
 	}
 
+	err = meta.(*apiClient).closeRemoteClient(d)
+	if err != nil {
+		return diag.Errorf("error while closing remote client: %s", err.Error())
+	}
+
 	return diag.Diagnostics{}
 }
 
@@ -162,7 +172,7 @@ func resourceRemotefileUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
-		return diag.Errorf(err.Error())
+		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
 	sudo, ok := d.GetOk("conn.0.sudo")
@@ -184,6 +194,11 @@ func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		if err != nil {
 			return diag.Errorf("error while removing remote file: %s", err.Error())
 		}
+	}
+
+	err = meta.(*apiClient).closeRemoteClient(d)
+	if err != nil {
+		return diag.Errorf("error while closing remote client: %s", err.Error())
 	}
 
 	return diag.Diagnostics{}

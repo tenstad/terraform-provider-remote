@@ -166,6 +166,10 @@ func NewRemoteClient(host string, clientConfig ssh.ClientConfig) (*RemoteClient,
 	}, nil
 }
 
+func (c *RemoteClient) Close() error {
+	return c.sshClient.Close()
+}
+
 func (c *RemoteClient) GetSSHClient() *ssh.Client {
 	return c.sshClient
 }

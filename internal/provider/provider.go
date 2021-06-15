@@ -39,7 +39,14 @@ func New(version string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"remotefile": resourceRemotefile(),
 			},
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				"max_sessions": {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Default:     3,
+					Description: "Maximum number of open sessions in each host connection.",
+				},
+			},
 		}
 
 		p.ConfigureContextFunc = configure(version, p)
@@ -49,15 +56,19 @@ func New(version string) func() *schema.Provider {
 }
 
 type apiClient struct {
-	mux           *sync.Mutex
-	remoteClients map[string]*RemoteClient
+	mux            *sync.Mutex
+	remoteClients  map[string]*RemoteClient
+	activeSessions map[string]int
+	maxSessions    int
 }
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(c context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		client := apiClient{
-			mux:           &sync.Mutex{},
-			remoteClients: map[string]*RemoteClient{},
+			maxSessions:    d.Get("max_sessions").(int),
+			mux:            &sync.Mutex{},
+			remoteClients:  map[string]*RemoteClient{},
+			activeSessions: map[string]int{},
 		}
 
 		return &client, diag.Diagnostics{}
@@ -66,21 +77,45 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 
 func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, error) {
 	connectionID := resourceConnectionHash(d)
+	defer c.mux.Unlock()
+	for {
+		c.mux.Lock()
+
+		client, ok := c.remoteClients[connectionID]
+		if ok {
+			if c.activeSessions[connectionID] >= c.maxSessions {
+				c.mux.Unlock()
+				continue
+			}
+			c.activeSessions[connectionID] += 1
+
+			return client, nil
+		}
+
+		client, err := RemoteClientFromResource(d)
+		if err != nil {
+			return nil, err
+		}
+
+		c.remoteClients[connectionID] = client
+		c.activeSessions[connectionID] = 1
+		return client, nil
+	}
+}
+
+func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
+	connectionID := resourceConnectionHash(d)
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	client, ok := c.remoteClients[connectionID]
-	if ok {
-		return client, nil
+	c.activeSessions[connectionID] -= 1
+	if c.activeSessions[connectionID] == 0 {
+		client := c.remoteClients[connectionID]
+		delete(c.remoteClients, connectionID)
+		return client.Close()
 	}
 
-	client, err := RemoteClientFromResource(d)
-	if err != nil {
-		return nil, err
-	}
-
-	c.remoteClients[connectionID] = client
-	return client, nil
+	return nil
 }
 
 func RemoteClientFromResource(d *schema.ResourceData) (*RemoteClient, error) {
