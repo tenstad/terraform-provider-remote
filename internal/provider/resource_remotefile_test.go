@@ -33,7 +33,7 @@ func TestAccResourceRemotefile(t *testing.T) {
 			},
 			{
 				Config: `
-				resource "remotefile" "foo" {
+				resource "remotefile" "bar" {
 				  conn {
 					  host = "remotehost8022"
 					  port = 8022
@@ -48,7 +48,7 @@ func TestAccResourceRemotefile(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"remotefile.foo", "content", regexp.MustCompile("bar")),
+						"remotefile.bar", "content", regexp.MustCompile("bar")),
 				),
 			},
 		},
