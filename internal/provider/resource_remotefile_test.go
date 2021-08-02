@@ -13,7 +13,39 @@ func TestAccResourceRemotefile(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceRemotefile,
+				Config: `
+				resource "remotefile" "foo" {
+				  conn {
+					  host = "remotehost"
+					  username = "root"
+					  sudo = true
+					  password = "password"
+				  }
+				  path = "/tmp/foo.txt"
+				  content = "bar"
+				  permissions = "0777"
+				}
+				`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"remotefile.foo", "content", regexp.MustCompile("bar")),
+				),
+			},
+			{
+				Config: `
+				resource "remotefile" "foo" {
+				  conn {
+					  host = "remotehost8022"
+					  port = 8022
+					  private_key_path = "../../tests/key"
+					  username = "root"
+					  sudo = true
+				  }
+				  path = "/tmp/bar.txt"
+				  content = "bar"
+				  permissions = "0777"
+				}
+				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
 						"remotefile.foo", "content", regexp.MustCompile("bar")),
@@ -22,17 +54,3 @@ func TestAccResourceRemotefile(t *testing.T) {
 		},
 	})
 }
-
-const testAccResourceRemotefile = `
-resource "remotefile" "foo" {
-  conn {
-	  host = "remotehost"
-	  username = "root"
-	  sudo = true
-	  password = "password"
-  }
-  path = "/tmp/foo.txt"
-  content = "bar"
-  permissions = "0777"
-}
-`

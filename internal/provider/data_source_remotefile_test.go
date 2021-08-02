@@ -31,7 +31,6 @@ data "remotefile" "bar" {
 		host = "remotehost"
 		username = "root"
 		private_key_path = "../../tests/key"
-		port = 8022
 	}
 	path = "/tmp/bar.txt"
 }

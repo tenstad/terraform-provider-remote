@@ -80,6 +80,10 @@ jobs:
     services:
       remotehost:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
+      remotehost8022:
+        image: ghcr.io/tenstad/remotehost:${{ github.sha }}
+        ports:
+          - "8022:22"
     container:
       image: golang:1.15
     steps:
