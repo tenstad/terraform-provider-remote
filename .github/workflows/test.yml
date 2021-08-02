@@ -77,12 +77,11 @@ jobs:
           - "0.12.29"
           - "0.13.4"
           - "0.14.0-beta2"
-          - "1.0.3"
     services:
       remotehost:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
     container:
-      image: golang:1.15
+      image: golang:1.14
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2.3.4
