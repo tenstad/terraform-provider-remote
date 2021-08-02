@@ -47,17 +47,26 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2.3.4
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build image
         uses: docker/build-push-action@v2
         with:
           context: tests
-          push: false
-          tags: remotehost:latest
+          push: true
+          tags: ghcr.io/tenstad/remotehost:${{ github.sha }}
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
     name: Matrix Test
-    needs: build
+    needs:
+      - build
+      - remotehost
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -65,12 +74,12 @@ jobs:
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '0.12.29'
-          - '0.13.4'
-          - '0.14.0-beta2'
+          - "0.12.29"
+          - "0.13.4"
+          - "0.14.0-beta2"
     services:
       remotehost:
-        image: remotehost:latest
+        image: ghcr.io/tenstad/remotehost:${{ github.sha }}
     container:
       image: golang:1.15
     steps:
