@@ -26,11 +26,11 @@ func TestAccResourceRemotefile(t *testing.T) {
 const testAccResourceRemotefile = `
 resource "remotefile" "foo" {
   conn {
-	  host = "terraform-provider-remotefile-test"
+	  host = "localhost"
 	  username = "root"
 	  sudo = true
 	  password = "password"
-	  port = 22
+	  port = 8022
   }
   path = "/tmp/foo.txt"
   content = "bar"
