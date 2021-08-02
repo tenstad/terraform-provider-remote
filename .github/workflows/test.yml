@@ -22,23 +22,37 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: '1.15'
+        id: go
 
-    - name: Set up Go
-      uses: actions/setup-go@v2.1.3
-      with:
-        go-version: '1.15'
-      id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2.3.4
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.3.4
+      - name: Get dependencies
+        run: |
+          go mod download
 
-    - name: Get dependencies
-      run: |
-        go mod download
+      - name: Build
+        run: |
+          go build -v .
 
-    - name: Build
-      run: |
-        go build -v .
+  remotehost:
+    name: Build remote host image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2.3.4
+
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          context: tests
+          push: false
+          tags: remotehost:latest
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
@@ -54,31 +68,22 @@ jobs:
           - '0.12.29'
           - '0.13.4'
           - '0.14.0-beta2'
+    services:
+      remotehost:
+        image: remotehost:latest
+    container:
+      image: golang:1.15
     steps:
+      - name: TF acceptance tests
+        timeout-minutes: 10
+        env:
+          TF_ACC: "1"
+          TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
 
-    - name: Set up Go
-      uses: actions/setup-go@v2.1.3
-      with:
-        go-version: '1.15'
-      id: go
+          # Set whatever additional acceptance test env vars here. You can
+          # optionally use data from your repository secrets using the
+          # following syntax:
+          # SOME_VAR: ${{ secrets.SOME_VAR }}
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.3.4
-
-    - name: Get dependencies
-      run: |
-        go mod download
-        
-    - name: TF acceptance tests
-      timeout-minutes: 10
-      env:
-        TF_ACC: "1"
-        TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
-
-        # Set whatever additional acceptance test env vars here. You can
-        # optionally use data from your repository secrets using the
-        # following syntax:
-        # SOME_VAR: ${{ secrets.SOME_VAR }}
-
-      run: |
-        go test -v -cover ./internal/provider/
+        run: |
+          go test -v -cover ./internal/provider/
