@@ -31,7 +31,7 @@ resource "remotefile" "bashrc" {
 
 ### Required
 
-- **conn** (Block List, Min: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
+- **conn** (Block List, Min: 1, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
 - **content** (String) Content of file.
 - **path** (String) Path to file on remote host.
 

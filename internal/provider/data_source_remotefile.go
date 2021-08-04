@@ -16,6 +16,8 @@ func dataSourceRemotefile() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"conn": {
 				Type:        schema.TypeList,
+				MinItems:    1,
+				MaxItems:    1,
 				Required:    true,
 				Description: "Connection to host where files are located.",
 				Elem: &schema.Resource{
