@@ -2,7 +2,7 @@
 page_title: "remotefile Provider"
 subcategory: ""
 description: |-
-  Mangae files on remote hosts
+  Manage files on remote hosts
 ---
 
 # remotefile Provider
@@ -10,7 +10,17 @@ description: |-
 ## Example Usage
 
 ```terraform
-provider "remotefile" {}
+provider "remotefile" {
+    max_sessions = 2
+}
 ```
 
 ## Schema
+
+### Required
+
+- *none*
+
+### Optional
+
+- **max_sessions** (Number, Optional) Maximum number of open sessions in each host connection.

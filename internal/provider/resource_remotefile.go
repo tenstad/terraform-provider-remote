@@ -45,7 +45,7 @@ func resourceRemotefile() *schema.Resource {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "Use sudo to gain access to read/write file.",
+							Description: "Use sudo to gain access to file.",
 						},
 						"password": {
 							Type:        schema.TypeString,
@@ -62,12 +62,12 @@ func resourceRemotefile() *schema.Resource {
 						"private_key_path": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "The path of the private key used to login to the target host.",
+							Description: "The local path to the private key used to login to the target host",
 						},
 						"private_key_env_var": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "The env var of the private key used to login to the target host.",
+							Description: "The name of the local environment variable containing the private key used to login to the target host.",
 						},
 					},
 				},

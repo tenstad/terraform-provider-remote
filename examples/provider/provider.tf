@@ -1,1 +1,3 @@
-provider "remotefile" {}
+provider "remotefile" {
+    max_sessions = 2
+}
