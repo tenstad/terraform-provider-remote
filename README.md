@@ -1,6 +1,6 @@
 # Terraform Provider Remotefile
 
-Documentation: https://registry.terraform.io/providers/tenstad/remotefile/latest/docs/resources/resource
+Documentation: https://registry.terraform.io/providers/tenstad/remotefile/latest/docs/resources/remotefile
 
 ## Requirements
 
