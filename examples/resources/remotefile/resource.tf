@@ -5,7 +5,7 @@ resource "remotefile" "bashrc" {
     username    = "john"
     private_key = "<ssh private key>"
   }
-  path = "/home/john/.bashrc"
-  content = "alias ll='ls -alF'"
+  path        = "/home/john/.bashrc"
+  content     = "alias ll='ls -alF'"
   permissions = "0644"
 }

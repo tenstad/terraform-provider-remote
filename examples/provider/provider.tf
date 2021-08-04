@@ -1,3 +1,3 @@
 provider "remotefile" {
-    max_sessions = 2
+  max_sessions = 2
 }
