@@ -8,14 +8,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceRemotefile() *schema.Resource {
+func resourceRemoteFile() *schema.Resource {
 	return &schema.Resource{
 		Description: "File on remote host.",
 
-		CreateContext: resourceRemotefileCreate,
-		ReadContext:   resourceRemotefileRead,
-		UpdateContext: resourceRemotefileUpdate,
-		DeleteContext: resourceRemotefileDelete,
+		CreateContext: resourceRemoteFileCreate,
+		ReadContext:   resourceRemoteFileRead,
+		UpdateContext: resourceRemoteFileUpdate,
+		DeleteContext: resourceRemoteFileDelete,
 
 		Schema: map[string]*schema.Schema{
 			"conn": {
@@ -97,7 +97,7 @@ func resourceRemotefile() *schema.Resource {
 	}
 }
 
-func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), d.Get("path").(string)))
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
@@ -130,7 +130,7 @@ func resourceRemotefileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	return diag.Diagnostics{}
 }
 
-func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), d.Get("path").(string)))
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
@@ -167,11 +167,11 @@ func resourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta in
 	return diag.Diagnostics{}
 }
 
-func resourceRemotefileUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceRemotefileCreate(ctx, d, meta)
+func resourceRemoteFileUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceRemoteFileCreate(ctx, d, meta)
 }
 
-func resourceRemotefileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
 		return diag.Errorf("error while opening remote client: %s", err.Error())

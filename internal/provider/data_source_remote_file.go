@@ -7,11 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceRemotefile() *schema.Resource {
+func dataSourceRemoteFile() *schema.Resource {
 	return &schema.Resource{
 		Description: "File on remote host.",
 
-		ReadContext: dataSourceRemotefileRead,
+		ReadContext: dataSourceRemoteFileRead,
 
 		Schema: map[string]*schema.Schema{
 			"conn": {
@@ -85,6 +85,6 @@ func dataSourceRemotefile() *schema.Resource {
 	}
 }
 
-func dataSourceRemotefileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceRemotefileRead(ctx, d, meta)
+func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceRemoteFileRead(ctx, d, meta)
 }

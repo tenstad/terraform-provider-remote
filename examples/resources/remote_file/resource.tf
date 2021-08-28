@@ -1,6 +1,6 @@
-resource "remotefile" "bashrc" {
+resource "remote_file" "bashrc" {
   conn {
-    host        = "google.com"
+    host        = "10.0.0.12"
     port        = 22
     username    = "john"
     private_key = "<ssh private key>"

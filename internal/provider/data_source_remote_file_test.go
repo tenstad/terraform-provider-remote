@@ -7,32 +7,31 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccResourceRemotefile(t *testing.T) {
+func TestAccDataSourceRemoteFile(t *testing.T) {
+
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceRemotefile,
+				Config: testAccDataSourceRemoteFile,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"remotefile.foo", "content", regexp.MustCompile("bar")),
+						// TODO: check content is correct
+						"data.remote_file.bar", "content", regexp.MustCompile("")),
 				),
 			},
 		},
 	})
 }
 
-const testAccResourceRemotefile = `
-resource "remotefile" "foo" {
-  conn {
-	  host = "remotehost"
-	  username = "root"
-	  sudo = true
-	  password = "password"
-  }
-  path = "/tmp/foo.txt"
-  content = "bar"
-  permissions = "0777"
+const testAccDataSourceRemoteFile = `
+data "remote_file" "bar" {
+	conn {
+		host = "remotehost"
+		username = "root"
+		private_key_path = "../../tests/key"
+	}
+	path = "/tmp/bar.txt"
 }
 `

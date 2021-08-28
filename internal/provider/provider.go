@@ -34,10 +34,10 @@ func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			DataSourcesMap: map[string]*schema.Resource{
-				"remotefile": dataSourceRemotefile(),
+				"remote_file": dataSourceRemoteFile(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"remotefile": resourceRemotefile(),
+				"remote_file": resourceRemoteFile(),
 			},
 			Schema: map[string]*schema.Schema{
 				"max_sessions": {
