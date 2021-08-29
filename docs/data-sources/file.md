@@ -15,11 +15,24 @@ File on remote host.
 ```terraform
 data "remote_file" "hosts" {
   conn {
-    host     = "10.0.0.12"
+    host     = "10.0.0.17"
     user     = "john"
     password = "password"
     sudo     = true
   }
+
+  path = "/etc/hosts"
+}
+
+data "remote_file" "server1_hosts" {
+  provider = remote.server1
+
+  path = "/etc/hosts"
+}
+
+data "remote_file" "server2_hosts" {
+  provider = remote.server2
+
   path = "/etc/hosts"
 }
 ```
@@ -29,11 +42,11 @@ data "remote_file" "hosts" {
 
 ### Required
 
-- **conn** (Block List, Min: 1, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
 - **path** (String) Path to file on remote host.
 
 ### Optional
 
+- **conn** (Block List, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
 - **id** (String) The ID of this resource.
 
 ### Read-Only

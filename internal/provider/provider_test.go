@@ -1,8 +1,10 @@
 package provider
 
 import (
+	"context"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -12,6 +14,22 @@ import (
 var providerFactories = map[string]func() (*schema.Provider, error){
 	"remote": func() (*schema.Provider, error) {
 		return New("dev")(), nil
+	},
+	"remotehost": func() (*schema.Provider, error) {
+		provider := New("dev")()
+		configureProvider := provider.ConfigureContextFunc
+		provider.ConfigureContextFunc = func(c context.Context, rd *schema.ResourceData) (interface{}, diag.Diagnostics) {
+			rd.Set("conn", []interface{}{
+				map[string]interface{}{
+					"host":     "remotehost",
+					"user":     "root",
+					"password": "password",
+					"port":     22,
+				},
+			})
+			return configureProvider(c, rd)
+		}
+		return provider, nil
 	},
 }
 

@@ -155,8 +155,8 @@ func (c *RemoteClient) DeleteFileSudo(d *schema.ResourceData) error {
 	return session.Run(cmd)
 }
 
-func NewRemoteClient(host string, clientConfig ssh.ClientConfig) (*RemoteClient, error) {
-	client, err := ssh.Dial("tcp", host, &clientConfig)
+func NewRemoteClient(host string, clientConfig *ssh.ClientConfig) (*RemoteClient, error) {
+	client, err := ssh.Dial("tcp", host, clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't establish a connection to the remote server: %s", err.Error())
 	}

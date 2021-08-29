@@ -13,8 +13,37 @@ description: |-
 ## Example Usage
 
 ```terraform
+# 'conn' must be defined in the resources and data sources when not defined in the provider
 provider "remote" {
   max_sessions = 2
+}
+
+# When 'conn' is defined in the provider, it can be overridden in resources and data sources
+# To override it, simply define a 'conn' in the resource or data source.
+provider "remote" {
+  alias = "server1"
+
+  max_sessions = 2
+
+  conn {
+    host     = "10.0.0.12"
+    user     = "john"
+    password = "password"
+    sudo     = true
+  }
+}
+
+provider "remote" {
+  alias = "server2"
+
+  max_sessions = 2
+
+  conn {
+    host     = "10.0.0.15"
+    user     = "john"
+    password = "password"
+    sudo     = true
+  }
 }
 ```
 
@@ -23,4 +52,22 @@ provider "remote" {
 
 ### Optional
 
+- **conn** (Block List, Max: 1) Default connection to host where files are located. Can be overridden in resources and data sources. (see [below for nested schema](#nestedblock--conn))
 - **max_sessions** (Number) Maximum number of open sessions in each host connection. Defaults to `3`.
+
+<a id="nestedblock--conn"></a>
+### Nested Schema for `conn`
+
+Required:
+
+- **host** (String) The remote host.
+- **user** (String) The user on the remote host.
+
+Optional:
+
+- **password** (String, Sensitive) The pasword for the user on the remote host.
+- **port** (Number) The ssh port on the remote host. Defaults to `22`.
+- **private_key** (String, Sensitive) The private key used to login to the remote host.
+- **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
+- **private_key_path** (String) The local path to the private key used to login to the remote host.
+- **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.

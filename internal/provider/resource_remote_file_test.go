@@ -22,6 +22,21 @@ func TestAccResourceRemoteFile(t *testing.T) {
 		},
 	})
 }
+func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceRemoteFileWithDefaultConnection,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"remote_file.bar", "content", regexp.MustCompile("123")),
+				),
+			},
+		},
+	})
+}
 
 const testAccResourceRemoteFile = `
 resource "remote_file" "foo" {
@@ -35,4 +50,13 @@ resource "remote_file" "foo" {
   content = "bar"
   permissions = "0777"
 }
+`
+
+const testAccResourceRemoteFileWithDefaultConnection = `
+resource "remote_file" "bar" {
+	provider = remotehost
+
+	path = "/tmp/defaultconn.txt"
+	content = "123"
+  }
 `
