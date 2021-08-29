@@ -45,16 +45,16 @@ data "remote_file" "hosts" {
 
 Required:
 
-- **host** (String) The target host.
-- **user** (String) The user on the target host.
+- **host** (String) The remote host.
+- **user** (String) The user on the remote host.
 
 Optional:
 
-- **password** (String, Sensitive) The pasword for the user on the target host.
-- **port** (Number) The ssh port to the target host. Defaults to `22`.
-- **private_key** (String, Sensitive) The private key used to login to the target host.
-- **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the target host.
-- **private_key_path** (String) The local path to the private key used to login to the target host
+- **password** (String, Sensitive) The pasword for the user on the remote host.
+- **port** (Number) The ssh port on the remote host. Defaults to `22`.
+- **private_key** (String, Sensitive) The private key used to login to the remote host.
+- **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
+- **private_key_path** (String) The local path to the private key used to login to the remote host.
 - **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.
 
 

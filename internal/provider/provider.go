@@ -24,7 +24,7 @@ func init() {
 	schema.SchemaDescriptionBuilder = func(s *schema.Schema) string {
 		desc := s.Description
 		if s.Default != nil {
-				desc += fmt.Sprintf(" Defaults to `%v`.", s.Default)
+			desc += fmt.Sprintf(" Defaults to `%v`.", s.Default)
 		}
 		return strings.TrimSpace(desc)
 	}
