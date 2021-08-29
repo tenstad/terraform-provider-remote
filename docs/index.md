@@ -23,4 +23,4 @@ provider "remote" {
 
 ### Optional
 
-- **max_sessions** (Number) Maximum number of open sessions in each host connection.
+- **max_sessions** (Number) Maximum number of open sessions in each host connection. Defaults to `3`.
