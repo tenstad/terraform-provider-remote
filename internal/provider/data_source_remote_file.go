@@ -22,6 +22,12 @@ func dataSourceRemoteFile() *schema.Resource {
 				Description: "Connection to host where files are located.",
 				Elem:        connectionSchemaResource,
 			},
+			"result_conn": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Result of applying provider's `conn` as default to optional `conn`",
+				Elem:        connectionSchemaResource,
+			},
 			"path": {
 				Description: "Path to file on remote host.",
 				Type:        schema.TypeString,

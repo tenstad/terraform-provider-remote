@@ -57,6 +57,10 @@ resource "remote_file" "server2_bashrc" {
 - **id** (String) The ID of this resource.
 - **permissions** (String) Permissions of file. Defaults to `0644`.
 
+### Read-Only
+
+- **result_conn** (List of Object) Computed conn for handling default functionality. (see [below for nested schema](#nestedatt--result_conn))
+
 <a id="nestedblock--conn"></a>
 ### Nested Schema for `conn`
 
@@ -73,5 +77,20 @@ Optional:
 - **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
 - **private_key_path** (String) The local path to the private key used to login to the remote host.
 - **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.
+
+
+<a id="nestedatt--result_conn"></a>
+### Nested Schema for `result_conn`
+
+Read-Only:
+
+- **host** (String)
+- **password** (String)
+- **port** (Number)
+- **private_key** (String)
+- **private_key_env_var** (String)
+- **private_key_path** (String)
+- **sudo** (Boolean)
+- **user** (String)
 
 

@@ -4,6 +4,7 @@ default: testacc
 .PHONY: testacc
 testacc:
 	docker rm -f remotehost
+	docker rm -f remotehost2
 	docker network rm remote || true
 	docker network create remote
 	docker build -t remotehost tests
