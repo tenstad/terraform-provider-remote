@@ -22,6 +22,7 @@ func TestAccResourceRemoteFile(t *testing.T) {
 		},
 	})
 }
+
 func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
