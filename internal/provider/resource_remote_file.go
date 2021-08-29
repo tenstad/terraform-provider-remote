@@ -50,7 +50,11 @@ func resourceRemoteFile() *schema.Resource {
 }
 
 func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), d.Get("path").(string)))
+	connectionResourceData, err := meta.(*apiClient).connectionResourceData(d)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
+	d.SetId(fmt.Sprintf("%s:%s", connectionResourceData.Get("conn.0.host").(string), d.Get("path").(string)))
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
@@ -83,7 +87,11 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), d.Get("path").(string)))
+	connectionResourceData, err := meta.(*apiClient).connectionResourceData(d)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
+	d.SetId(fmt.Sprintf("%s:%s", connectionResourceData.Get("conn.0.host").(string), d.Get("path").(string)))
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
