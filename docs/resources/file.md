@@ -20,6 +20,23 @@ resource "remote_file" "bashrc" {
     user        = "john"
     private_key = "<ssh private key>"
   }
+
+  path        = "/home/john/.bashrc"
+  content     = "alias ll='ls -alF'"
+  permissions = "0644"
+}
+
+resource "remote_file" "server1_bashrc" {
+  provider = remote.server1
+
+  path        = "/home/john/.bashrc"
+  content     = "alias ll='ls -alF'"
+  permissions = "0644"
+}
+
+resource "remote_file" "server2_bashrc" {
+  provider = remote.server2
+
   path        = "/home/john/.bashrc"
   content     = "alias ll='ls -alF'"
   permissions = "0644"
@@ -31,12 +48,12 @@ resource "remote_file" "bashrc" {
 
 ### Required
 
-- **conn** (Block List, Min: 1, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
 - **content** (String) Content of file.
 - **path** (String) Path to file on remote host.
 
 ### Optional
 
+- **conn** (Block List, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
 - **id** (String) The ID of this resource.
 - **permissions** (String) Permissions of file. Defaults to `0644`.
 

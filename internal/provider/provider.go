@@ -2,16 +2,14 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"golang.org/x/crypto/ssh"
 )
 
 func init() {
@@ -40,6 +38,14 @@ func New(version string) func() *schema.Provider {
 				"remote_file": resourceRemoteFile(),
 			},
 			Schema: map[string]*schema.Schema{
+				"conn": {
+					Type:        schema.TypeList,
+					MinItems:    0,
+					MaxItems:    1,
+					Optional:    true,
+					Description: "Default connection to host where files are located. Can be overridden in resources and data sources.",
+					Elem:        connectionSchemaResource,
+				},
 				"max_sessions": {
 					Type:        schema.TypeInt,
 					Optional:    true,
@@ -56,6 +62,7 @@ func New(version string) func() *schema.Provider {
 }
 
 type apiClient struct {
+	resourceData   *schema.ResourceData
 	mux            *sync.Mutex
 	remoteClients  map[string]*RemoteClient
 	activeSessions map[string]int
@@ -65,6 +72,7 @@ type apiClient struct {
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(c context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		client := apiClient{
+			resourceData:   d,
 			maxSessions:    d.Get("max_sessions").(int),
 			mux:            &sync.Mutex{},
 			remoteClients:  map[string]*RemoteClient{},
@@ -75,8 +83,27 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 	}
 }
 
+func (c *apiClient) connectionResourceData(d *schema.ResourceData) (*schema.ResourceData, error) {
+	_, ok := d.GetOk("conn")
+	if ok {
+		return d, nil
+	}
+
+	_, ok = c.resourceData.GetOk("conn")
+	if ok {
+		return c.resourceData, nil
+	}
+
+	return nil, errors.New("neither the provider nor the resource/data source have a configured connection")
+}
+
 func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, error) {
-	connectionID := resourceConnectionHash(d)
+	resourceData, err := c.connectionResourceData(d)
+	if err != nil {
+		return nil, err
+	}
+
+	connectionID := resourceConnectionHash(resourceData)
 	defer c.mux.Unlock()
 	for {
 		c.mux.Lock()
@@ -92,7 +119,7 @@ func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, erro
 			return client, nil
 		}
 
-		client, err := RemoteClientFromResource(d)
+		client, err = remoteClientFromResourceData(resourceData)
 		if err != nil {
 			return nil, err
 		}
@@ -103,8 +130,21 @@ func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, erro
 	}
 }
 
+func remoteClientFromResourceData(d *schema.ResourceData) (*RemoteClient, error) {
+	host, clientConfig, err := ConnectionFromResourceData(d)
+	if err != nil {
+		return nil, err
+	}
+	return NewRemoteClient(host, clientConfig)
+}
+
 func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
-	connectionID := resourceConnectionHash(d)
+	resourceData, err := c.connectionResourceData(d)
+	if err != nil {
+		return err
+	}
+
+	connectionID := resourceConnectionHash(resourceData)
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -116,53 +156,6 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 	}
 
 	return nil
-}
-
-func RemoteClientFromResource(d *schema.ResourceData) (*RemoteClient, error) {
-	clientConfig := ssh.ClientConfig{
-		User:            d.Get("conn.0.user").(string),
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-
-	password, ok := d.GetOk("conn.0.password")
-	if ok {
-		clientConfig.Auth = append(clientConfig.Auth, ssh.Password(password.(string)))
-	}
-
-	private_key, ok := d.GetOk("conn.0.private_key")
-	if ok {
-		signer, err := ssh.ParsePrivateKey([]byte(private_key.(string)))
-		if err != nil {
-			return nil, fmt.Errorf("couldn't create a ssh client config from private key: %s", err.Error())
-		}
-		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
-	}
-
-	private_key_path, ok := d.GetOk("conn.0.private_key_path")
-	if ok {
-		content, err := ioutil.ReadFile(private_key_path.(string))
-		if err != nil {
-			return nil, fmt.Errorf("couldn't read private key: %s", err.Error())
-		}
-		signer, err := ssh.ParsePrivateKey(content)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't create a ssh client config from private key file: %s", err.Error())
-		}
-		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
-	}
-
-	private_key_env_var, ok := d.GetOk("conn.0.private_key_env_var")
-	if ok {
-		private_key := os.Getenv(private_key_env_var.(string))
-		signer, err := ssh.ParsePrivateKey([]byte(private_key))
-		if err != nil {
-			return nil, fmt.Errorf("couldn't create a ssh client config from private key env var: %s", err.Error())
-		}
-		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
-	}
-
-	host := fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int))
-	return NewRemoteClient(host, clientConfig)
 }
 
 func resourceConnectionHash(d *schema.ResourceData) string {
