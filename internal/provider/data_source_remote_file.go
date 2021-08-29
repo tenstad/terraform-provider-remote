@@ -25,6 +25,7 @@ func dataSourceRemoteFile() *schema.Resource {
 			"result_conn": {
 				Type:        schema.TypeList,
 				Computed:    true,
+				ForceNew:    true,
 				Description: "Result of applying provider's `conn` as default to optional `conn`",
 				Elem:        connectionSchemaResource,
 			},

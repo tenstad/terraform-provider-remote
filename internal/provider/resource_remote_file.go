@@ -29,6 +29,7 @@ func resourceRemoteFile() *schema.Resource {
 			"result_conn": {
 				Type:        schema.TypeList,
 				Computed:    true,
+				ForceNew:    true,
 				Description: "Computed conn for handling default functionality.",
 				Elem:        connectionSchemaResource,
 			},
