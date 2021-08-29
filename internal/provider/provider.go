@@ -120,7 +120,7 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 
 func RemoteClientFromResource(d *schema.ResourceData) (*RemoteClient, error) {
 	clientConfig := ssh.ClientConfig{
-		User:            d.Get("conn.0.username").(string),
+		User:            d.Get("conn.0.user").(string),
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
@@ -168,7 +168,7 @@ func RemoteClientFromResource(d *schema.ResourceData) (*RemoteClient, error) {
 func resourceConnectionHash(d *schema.ResourceData) string {
 	elements := []string{
 		d.Get("conn.0.host").(string),
-		d.Get("conn.0.username").(string),
+		d.Get("conn.0.user").(string),
 		strconv.Itoa(d.Get("conn.0.port").(int)),
 		resourceStringWithDefault(d, "conn.0.password", ""),
 		resourceStringWithDefault(d, "conn.0.private_key", ""),

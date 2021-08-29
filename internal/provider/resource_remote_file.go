@@ -38,10 +38,10 @@ func resourceRemoteFile() *schema.Resource {
 							Default:     22,
 							Description: "The ssh port to the target host.",
 						},
-						"username": {
+						"user": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "The username on the target host.",
+							Description: "The user on the target host.",
 						},
 						"sudo": {
 							Type:        schema.TypeBool,

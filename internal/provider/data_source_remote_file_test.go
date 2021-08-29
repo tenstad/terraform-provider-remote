@@ -29,7 +29,7 @@ const testAccDataSourceRemoteFile = `
 data "remote_file" "bar" {
 	conn {
 		host = "remotehost"
-		username = "root"
+		user = "root"
 		private_key_path = "../../tests/key"
 	}
 	path = "/tmp/bar.txt"

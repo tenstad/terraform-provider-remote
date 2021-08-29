@@ -2,7 +2,7 @@ resource "remote_file" "bashrc" {
   conn {
     host        = "10.0.0.12"
     port        = 22
-    username    = "john"
+    user        = "john"
     private_key = "<ssh private key>"
   }
   path        = "/home/john/.bashrc"

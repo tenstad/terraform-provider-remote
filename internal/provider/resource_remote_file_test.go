@@ -27,7 +27,7 @@ const testAccResourceRemoteFile = `
 resource "remote_file" "foo" {
   conn {
 	  host = "remotehost"
-	  username = "root"
+	  user = "root"
 	  sudo = true
 	  password = "password"
   }
