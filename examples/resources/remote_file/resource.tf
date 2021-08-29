@@ -7,7 +7,7 @@ resource "remote_file" "bashrc" {
   }
 
   path        = "/home/john/.bashrc"
-  content     = "alias ll='ls -alF'"
+  content     = file("${path.module}/.bashrc")
   permissions = "0644"
 }
 
