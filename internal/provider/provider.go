@@ -83,27 +83,24 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 	}
 }
 
-func (c *apiClient) connectionResourceData(d *schema.ResourceData) (*schema.ResourceData, error) {
-	_, ok := d.GetOk("conn")
+func (c *apiClient) applyResultConn(d *schema.ResourceData) (*schema.ResourceData, error) {
+	conn, ok := d.GetOk("conn")
 	if ok {
+		d.Set("result_conn", conn)
 		return d, nil
 	}
 
-	_, ok = c.resourceData.GetOk("conn")
+	conn, ok = c.resourceData.GetOk("conn")
 	if ok {
-		return c.resourceData, nil
+		d.Set("result_conn", conn)
+		return d, nil
 	}
 
 	return nil, errors.New("neither the provider nor the resource/data source have a configured connection")
 }
 
 func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, error) {
-	resourceData, err := c.connectionResourceData(d)
-	if err != nil {
-		return nil, err
-	}
-
-	connectionID := resourceConnectionHash(resourceData)
+	connectionID := resourceConnectionHash(d)
 	defer c.mux.Unlock()
 	for {
 		c.mux.Lock()
@@ -119,7 +116,7 @@ func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, erro
 			return client, nil
 		}
 
-		client, err = remoteClientFromResourceData(resourceData)
+		client, err := remoteClientFromResourceData(d)
 		if err != nil {
 			return nil, err
 		}
@@ -139,12 +136,7 @@ func remoteClientFromResourceData(d *schema.ResourceData) (*RemoteClient, error)
 }
 
 func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
-	resourceData, err := c.connectionResourceData(d)
-	if err != nil {
-		return err
-	}
-
-	connectionID := resourceConnectionHash(resourceData)
+	connectionID := resourceConnectionHash(d)
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -160,12 +152,12 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 
 func resourceConnectionHash(d *schema.ResourceData) string {
 	elements := []string{
-		d.Get("conn.0.host").(string),
-		d.Get("conn.0.user").(string),
-		strconv.Itoa(d.Get("conn.0.port").(int)),
-		resourceStringWithDefault(d, "conn.0.password", ""),
-		resourceStringWithDefault(d, "conn.0.private_key", ""),
-		resourceStringWithDefault(d, "conn.0.private_key_path", ""),
+		d.Get("result_conn.0.host").(string),
+		d.Get("result_conn.0.user").(string),
+		strconv.Itoa(d.Get("result_conn.0.port").(int)),
+		resourceStringWithDefault(d, "result_conn.0.password", ""),
+		resourceStringWithDefault(d, "result_conn.0.private_key", ""),
+		resourceStringWithDefault(d, "result_conn.0.private_key_path", ""),
 	}
 	return strings.Join(elements, "::")
 }
