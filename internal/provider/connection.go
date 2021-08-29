@@ -60,7 +60,7 @@ var connectionSchemaResource = &schema.Resource{
 }
 
 func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConfig, error) {
-	_, ok := d.GetOk("conn.0.host")
+	_, ok := d.GetOk("conn")
 	if !ok {
 		return "", nil, fmt.Errorf("resouce does not have a connection configured")
 	}
