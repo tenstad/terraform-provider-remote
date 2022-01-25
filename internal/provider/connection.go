@@ -3,10 +3,12 @@ package provider
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 var connectionSchemaResource = &schema.Resource{
@@ -56,6 +58,13 @@ var connectionSchemaResource = &schema.Resource{
 			Optional:    true,
 			Description: "The name of the local environment variable containing the private key used to login to the remote host.",
 		},
+		"agent": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Use a local SSH agent to login to the remote host.",
+		},
+
 	},
 }
 
@@ -105,6 +114,15 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 			return "", nil, fmt.Errorf("couldn't create a ssh client config from private key env var: %s", err.Error())
 		}
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
+	}
+
+	enable_agent, ok := d.GetOk("result_conn.0.agent")
+	if ok && enable_agent.(bool) {
+		sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
+		if err != nil {
+			return "", nil, fmt.Errorf("couldn't connect to SSH agent: %s", err.Error())
+		}
+		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers))
 	}
 
 	host := fmt.Sprintf("%s:%d", d.Get("result_conn.0.host").(string), d.Get("result_conn.0.port").(int))

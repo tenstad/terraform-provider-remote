@@ -71,3 +71,4 @@ Optional:
 - **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
 - **private_key_path** (String) The local path to the private key used to login to the remote host.
 - **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.
+- **agent** (Booean) Use local SSH agent to login to the remote host. Default to `false`.
