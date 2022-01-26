@@ -118,11 +118,11 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 
 	enable_agent, ok := d.GetOk("result_conn.0.agent")
 	if ok && enable_agent.(bool) {
-		sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
+		connection, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't connect to SSH agent: %s", err.Error())
 		}
-		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers))
+		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(connection).Signers))
 	}
 
 	host := fmt.Sprintf("%s:%d", d.Get("result_conn.0.host").(string), d.Get("result_conn.0.port").(int))
