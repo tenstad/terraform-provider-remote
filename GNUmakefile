@@ -1,8 +1,8 @@
-default: test
+default: testacc
 
 # Run acceptance tests
-.PHONY: test
-test:
+.PHONY: testacc
+testacc:
 	docker rm -f remotehost
 	docker rm -f remotehost2
 	docker network rm remote || true
