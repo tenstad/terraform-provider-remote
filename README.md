@@ -1,51 +1,36 @@
 # Terraform Provider Remote
 
-Documentation: https://registry.terraform.io/providers/tenstad/remote/latest/docs/resources/file
+**Documentation**: https://registry.terraform.io/providers/tenstad/remote/latest/docs/resources/file
 
-## Requirements
+## Issues
 
--	[Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
--	[Go](https://golang.org/doc/install) >= 1.16
+Please create an issue if you find typos, have any questions, or problems with
+the provider. Feature requests are welcome, but you may have to get your hands
+dirty and take part in the implementation to get the feature merged.
 
-## Building The Provider
+## Pull Requests
 
-1. Clone the repository
-1. Enter the repository directory
-1. Build the provider using the Go `install` command: 
-```sh
-$ go install
-```
+Pull requests are welcome! 😊 You may create an issue to discuss the changes
+first, but it is not a strict requirement.
 
-## Adding Dependencies
-
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
-
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
-
-```
-go get github.com/author/dependency
-go mod tidy
-```
-
-Then commit the changes to `go.mod` and `go.sum`.
-
-## Using the provider
-
-Fill this in for each provider
+Before creating a PR, please ensure that all documentation is correctly
+generated (`go generate`), and that go modules are tidy (`go mod tidy`).
 
 ## Developing the Provider
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
+### Requirements
 
-To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+If you wish to work on the provider, you'll first need Go installed on your
+machine. You might also want Terraform and Docker, depending on the work.
 
-To generate or update documentation, run `go generate`.
+- [Go](https://golang.org/doc/install) >= 1.16
+- [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
+- [Docker](https://www.docker.com/get-started) (for test purposes)
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+### Workflow
 
-*Note:* Acceptance tests create real resources, and often cost money to run.
-
-```sh
-$ make testacc
-```
+- `go install` to compile the provider. The provider binary will be built in
+  `$GOPATH/bin`.
+- `make test` to acceptance test the provider. NOTE: Docker is required, tests
+  are performed between containers.
+- `go generate` to generate documentation.
