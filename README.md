@@ -32,5 +32,5 @@ machine. You might also want Terraform and Docker, depending on the work.
 - `go install` to compile the provider. The provider binary will be built in
   `$GOPATH/bin`.
 - `make test` to acceptance test the provider. NOTE: Docker is required, tests
-  are performed between container.
+  are performed between containers.
 - `go generate` to generate documentation.
