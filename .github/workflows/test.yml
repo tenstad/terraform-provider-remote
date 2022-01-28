@@ -85,6 +85,8 @@ jobs:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
       remotehost2:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
+    container:
+      image: ubuntu:latest
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2.1.3
