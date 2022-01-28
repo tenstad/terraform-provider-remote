@@ -103,7 +103,9 @@ jobs:
       - name: TF acceptance tests
         timeout-minutes: 10
         env:
-          TF_ACC: "1"
           # SOME_VAR: ${{ secrets.SOME_VAR }}
+          TF_ACC: "1"
+          SKIP_TEST_PRIVATE_KEY: "1"
+          SKIP_TEST_PRIVATE_KEY_PATH: "1"
         run: |
           ./tests/test.sh
