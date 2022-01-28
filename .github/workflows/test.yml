@@ -86,13 +86,11 @@ jobs:
       remotehost2:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
     container:
-      image: ubuntu:latest
+      image: golang:1.16
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2.1.3
-        with:
-          go-version: '1.16'
-        id: go
+      - name: Install unzip
+        run: |
+          apt-get update && apt-get install -y unzip
       
       - uses: hashicorp/setup-terraform@v1
         with:
