@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"os"
 	"regexp"
 	"testing"
 
@@ -8,7 +9,11 @@ import (
 )
 
 // Updating fields in provider or swapping provider should ideally be supported
-/*func TestMovingFileByModifyingProvider(t *testing.T) {
+func TestMovingFileByModifyingProvider(t *testing.T) {
+	if os.Getenv("SKIP_TEST_MOVE_FILE_BY_MODIFYING_PROVIDER") == "1" {
+		return
+	}
+
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
@@ -55,7 +60,7 @@ import (
 			},
 		},
 	})
-}*/
+}
 
 func TestMovingFileByModifyingConn(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{

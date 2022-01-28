@@ -13,10 +13,22 @@ func TestAccResourceRemoteFile(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceRemoteFile,
+				Config: `
+				resource "remote_file" "resource_1" {
+				  conn {
+					  host = "remotehost"
+					  user = "root"
+					  sudo = true
+					  password = "password"
+				  }
+				  path = "/tmp/resource_1.txt"
+				  content = "resource_1"
+				  permissions = "0777"
+				}
+				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"remote_file.foo", "content", regexp.MustCompile("bar")),
+						"remote_file.resource_1", "content", regexp.MustCompile("resource_1")),
 				),
 			},
 		},
@@ -29,35 +41,19 @@ func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceRemoteFileWithDefaultConnection,
+				Config: `
+				resource "remote_file" "resource_2" {
+					provider = remotehost
+				
+					path = "/tmp/resource_2.txt"
+					content = "resource_2"
+				  }
+				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"remote_file.bar", "content", regexp.MustCompile("123")),
+						"remote_file.resource_2", "content", regexp.MustCompile("resource_2")),
 				),
 			},
 		},
 	})
 }
-
-const testAccResourceRemoteFile = `
-resource "remote_file" "foo" {
-  conn {
-	  host = "remotehost"
-	  user = "root"
-	  sudo = true
-	  password = "password"
-  }
-  path = "/tmp/foo.txt"
-  content = "bar"
-  permissions = "0777"
-}
-`
-
-const testAccResourceRemoteFileWithDefaultConnection = `
-resource "remote_file" "bar" {
-	provider = remotehost
-
-	path = "/tmp/defaultconn.txt"
-	content = "123"
-  }
-`
