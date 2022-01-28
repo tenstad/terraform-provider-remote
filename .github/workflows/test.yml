@@ -85,9 +85,13 @@ jobs:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
       remotehost2:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
-    container:
-      image: golang:1.16
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: '1.16'
+        id: go
+      
       - uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ matrix.terraform }}
@@ -100,11 +104,6 @@ jobs:
         timeout-minutes: 10
         env:
           TF_ACC: "1"
-
-          # Set whatever additional acceptance test env vars here. You can
-          # optionally use data from your repository secrets using the
-          # following syntax:
           # SOME_VAR: ${{ secrets.SOME_VAR }}
-
         run: |
           ./tests/test.sh
