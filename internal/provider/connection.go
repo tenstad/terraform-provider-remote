@@ -116,7 +116,7 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	enable_agent, ok := d.GetOk("result_conn.0.agent")
+	enableAgent, ok := d.GetOk("result_conn.0.agent")
 	if ok && enable_agent.(bool) {
 		connection, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 		if err != nil {
