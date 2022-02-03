@@ -57,3 +57,29 @@ func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 		},
 	})
 }
+
+func TestAccResourceRemoteFileWithAgent(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				resource "remote_file" "resource_3" {
+					conn {
+						host = "remotehost"
+						user = "root"
+						agent = true
+					}
+					path = "/tmp/resource_3.txt"
+					content = "resource_3"
+				  }
+				`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_3", "content", regexp.MustCompile("resource_3")),
+				),
+			},
+		},
+	})
+}
