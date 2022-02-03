@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"os"
 	"regexp"
 	"testing"
 
@@ -59,6 +60,10 @@ func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 }
 
 func TestAccResourceRemoteFileWithAgent(t *testing.T) {
+	if os.Getenv("SKIP_TEST_AGENT") == "1" {
+		return
+	}
+
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
