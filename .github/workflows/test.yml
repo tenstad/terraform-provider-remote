@@ -107,5 +107,6 @@ jobs:
           TF_ACC: "1"
           SKIP_TEST_PRIVATE_KEY: "1"
           SKIP_TEST_PRIVATE_KEY_PATH: "1"
+          SKIP_TEST_AGENT: "1"
         run: |
           ./tests/test.sh
