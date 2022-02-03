@@ -65,6 +65,7 @@ Required:
 
 Optional:
 
+- **agent** (Boolean) Use a local SSH agent to login to the remote host. Defaults to `false`.
 - **password** (String, Sensitive) The pasword for the user on the remote host.
 - **port** (Number) The ssh port on the remote host. Defaults to `22`.
 - **private_key** (String, Sensitive) The private key used to login to the remote host.
