@@ -62,7 +62,11 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("result_conn.0.host").(string), d.Get("path").(string)))
+	content := d.Get("content").(string)
+	path := d.Get("path").(string)
+	permissions := d.Get("permissions").(string)
+
+	d.SetId(fmt.Sprintf("%s:%s", d.Get("result_conn.0.host").(string), path))
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
@@ -71,16 +75,16 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	sudo, ok := d.GetOk("result_conn.0.sudo")
 	if ok && sudo.(bool) {
-		err := client.WriteFileSudo(d)
+		err := client.WriteFileSudo(content, path)
 		if err != nil {
 			return diag.Errorf("error while creating remote file with sudo: %s", err.Error())
 		}
-		err = client.ChmodFileSudo(d)
+		err = client.ChmodFileSudo(path, permissions)
 		if err != nil {
 			return diag.Errorf("error while changing permissions of remote file with sudo: %s", err.Error())
 		}
 	} else {
-		err := client.WriteFile(d)
+		err := client.WriteFile(content, path, permissions)
 		if err != nil {
 			return diag.Errorf("error while creating remote file: %s", err.Error())
 		}
@@ -100,7 +104,9 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf(err.Error())
 	}
 
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("result_conn.0.host").(string), d.Get("path").(string)))
+	path := d.Get("path").(string)
+
+	d.SetId(fmt.Sprintf("%s:%s", d.Get("result_conn.0.host").(string), path))
 
 	client, err := meta.(*apiClient).getRemoteClient(d)
 	if err != nil {
@@ -109,23 +115,25 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	sudo, ok := d.GetOk("result_conn.0.sudo")
 	if ok && sudo.(bool) {
-		exists, err := client.FileExistsSudo(d)
+		exists, err := client.FileExistsSudo(path)
 		if err != nil {
 			return diag.Errorf("error while checking if remote file exists with sudo: %s", err.Error())
 		}
 		if exists {
-			err := client.ReadFileSudo(d)
+			content, err := client.ReadFileSudo(path)
 			if err != nil {
 				return diag.Errorf("error while reading remote file with sudo: %s", err.Error())
 			}
+			d.Set("content", content)
 		} else {
 			return diag.Errorf("cannot read file, it does not exist.")
 		}
 	} else {
-		err := client.ReadFile(d)
+		content, err := client.ReadFile(path)
 		if err != nil {
 			return diag.Errorf("error while reading remote file: %s", err.Error())
 		}
+		d.Set("content", content)
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(d)
@@ -151,14 +159,16 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
+	path := d.Get("path").(string)
+
 	sudo, ok := d.GetOk("result_conn.0.sudo")
 	if ok && sudo.(bool) {
-		exists, err := client.FileExistsSudo(d)
+		exists, err := client.FileExistsSudo(path)
 		if err != nil {
 			return diag.Errorf("error while checking if remote file exists with sudo: %s", err.Error())
 		}
 		if exists {
-			err := client.DeleteFileSudo(d)
+			err := client.DeleteFileSudo(path)
 			if err != nil {
 				return diag.Errorf("error while removing remote file with sudo: %s", err.Error())
 			}
@@ -166,7 +176,7 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 			return diag.Errorf("cannot delete file, it does not exist.")
 		}
 	} else {
-		err := client.DeleteFile(d)
+		err := client.DeleteFile(path)
 		if err != nil {
 			return diag.Errorf("error while removing remote file: %s", err.Error())
 		}
