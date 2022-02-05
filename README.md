@@ -27,10 +27,24 @@ machine. You might also want Terraform and Docker, depending on the work.
 - [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
 - [Docker](https://www.docker.com/get-started) (for test purposes)
 
-### Workflow
+### Development Workflow
 
-- `go install` to compile the provider. The provider binary will be built in
-  `$GOPATH/bin`.
-- `make test` to acceptance test the provider. NOTE: Docker is required, tests
-  are performed between containers.
-- `go generate` to generate documentation.
+The playground enables developers to play around with changes and new features
+without releasing a new version of the provider. 
+
+In `playground/`:
+
+- `make install` to compile and install the provider in the playground
+- `make hosts` to start containers to use as remote hosts
+- Evaluate your changes my modifying `main.tf`  
+  and running `terraform plan` or `terraform apply`
+- `docker exec -it remotehost sh` to enter remote host  
+  and see that configuration is applied correctly
+- `make clean` to delete terraform state and remote hosts
+
+When changes are working as intended:
+
+- Create/modify acceptance tests
+- `make test` to run acceptance test  
+  NOTE: Docker is required, tests are performed between containers
+- `go generate` to generate documentation
