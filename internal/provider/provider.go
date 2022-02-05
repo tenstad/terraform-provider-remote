@@ -158,6 +158,7 @@ func resourceConnectionHash(d *schema.ResourceData) string {
 		resourceStringWithDefault(d, "result_conn.0.password", ""),
 		resourceStringWithDefault(d, "result_conn.0.private_key", ""),
 		resourceStringWithDefault(d, "result_conn.0.private_key_path", ""),
+		strconv.FormatBool(d.Get("result_conn.0.agent").(bool)),
 	}
 	return strings.Join(elements, "::")
 }
