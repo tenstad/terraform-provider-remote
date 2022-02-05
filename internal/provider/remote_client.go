@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
@@ -15,17 +14,17 @@ type RemoteClient struct {
 	sshClient *ssh.Client
 }
 
-func (c *RemoteClient) WriteFile(d *schema.ResourceData) error {
+func (c *RemoteClient) WriteFile(content string, path string, permissions string) error {
 	scpClient, err := c.GetSCPClient()
 	if err != nil {
 		return err
 	}
 	defer scpClient.Close()
 
-	return scpClient.CopyFile(strings.NewReader(d.Get("content").(string)), d.Get("path").(string), d.Get("permissions").(string))
+	return scpClient.CopyFile(strings.NewReader(content), path, permissions)
 }
 
-func (c *RemoteClient) WriteFileSudo(d *schema.ResourceData) error {
+func (c *RemoteClient) WriteFileSudo(content string, path string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -39,17 +38,16 @@ func (c *RemoteClient) WriteFileSudo(d *schema.ResourceData) error {
 		return err
 	}
 
-	content := d.Get("content").(string)
 	go func() {
 		stdin.Write([]byte(content))
 		stdin.Close()
 	}()
 
-	cmd := fmt.Sprintf("cat /dev/stdin | sudo tee %s", d.Get("path").(string))
+	cmd := fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
 	return session.Run(cmd)
 }
 
-func (c *RemoteClient) ChmodFileSudo(d *schema.ResourceData) error {
+func (c *RemoteClient) ChmodFileSudo(path string, permissions string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -58,11 +56,11 @@ func (c *RemoteClient) ChmodFileSudo(d *schema.ResourceData) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprintf("sudo chmod %s %s", d.Get("permissions").(string), d.Get("path").(string))
+	cmd := fmt.Sprintf("sudo chmod %s %s", permissions, path)
 	return session.Run(cmd)
 }
 
-func (c *RemoteClient) FileExistsSudo(d *schema.ResourceData) (bool, error) {
+func (c *RemoteClient) FileExistsSudo(path string) (bool, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -71,7 +69,6 @@ func (c *RemoteClient) FileExistsSudo(d *schema.ResourceData) (bool, error) {
 	}
 	defer session.Close()
 
-	path := d.Get("path").(string)
 	cmd := fmt.Sprintf("test -f %s", path)
 	err = session.Run(cmd)
 
@@ -89,60 +86,57 @@ func (c *RemoteClient) FileExistsSudo(d *schema.ResourceData) (bool, error) {
 	return true, nil
 }
 
-func (c *RemoteClient) ReadFile(d *schema.ResourceData) error {
+func (c *RemoteClient) ReadFile(path string) (string, error) {
 	sftpClient, err := c.GetSFTPClient()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer sftpClient.Close()
 
-	file, err := sftpClient.Open(d.Get("path").(string))
+	file, err := sftpClient.Open(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
 	content := bytes.Buffer{}
 	_, err = file.WriteTo(&content)
-
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	d.Set("content", string(content.String()))
-	return nil
+	return content.String(), nil
 }
 
-func (c *RemoteClient) ReadFileSudo(d *schema.ResourceData) error {
+func (c *RemoteClient) ReadFileSudo(path string) (string, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprintf("sudo cat %s", d.Get("path").(string))
+	cmd := fmt.Sprintf("sudo cat %s", path)
 	content, err := session.Output(cmd)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	d.Set("content", string(content))
-	return nil
+	return string(content), nil
 }
 
-func (c *RemoteClient) DeleteFile(d *schema.ResourceData) error {
+func (c *RemoteClient) DeleteFile(path string) error {
 	sftpClient, err := c.GetSFTPClient()
 	if err != nil {
 		return err
 	}
 	defer sftpClient.Close()
 
-	return sftpClient.Remove(d.Get("path").(string))
+	return sftpClient.Remove(path)
 }
 
-func (c *RemoteClient) DeleteFileSudo(d *schema.ResourceData) error {
+func (c *RemoteClient) DeleteFileSudo(path string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -151,7 +145,7 @@ func (c *RemoteClient) DeleteFileSudo(d *schema.ResourceData) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprintf("sudo rm %s", d.Get("path").(string))
+	cmd := fmt.Sprintf("sudo rm %s", path)
 	return session.Run(cmd)
 }
 
