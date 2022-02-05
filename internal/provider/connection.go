@@ -70,22 +70,22 @@ var connectionSchemaResource = &schema.Resource{
 }
 
 func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConfig, error) {
-	_, ok := d.GetOk("result_conn")
+	_, ok := d.GetOk("conn")
 	if !ok {
 		return "", nil, fmt.Errorf("resouce does not have a connection configured")
 	}
 
 	clientConfig := ssh.ClientConfig{
-		User:            d.Get("result_conn.0.user").(string),
+		User:            d.Get("conn.0.user").(string),
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	password, ok := d.GetOk("result_conn.0.password")
+	password, ok := d.GetOk("conn.0.password")
 	if ok {
 		clientConfig.Auth = append(clientConfig.Auth, ssh.Password(password.(string)))
 	}
 
-	private_key, ok := d.GetOk("result_conn.0.private_key")
+	private_key, ok := d.GetOk("conn.0.private_key")
 	if ok {
 		signer, err := ssh.ParsePrivateKey([]byte(private_key.(string)))
 		if err != nil {
@@ -94,7 +94,7 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	private_key_path, ok := d.GetOk("result_conn.0.private_key_path")
+	private_key_path, ok := d.GetOk("conn.0.private_key_path")
 	if ok {
 		content, err := ioutil.ReadFile(private_key_path.(string))
 		if err != nil {
@@ -107,7 +107,7 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	private_key_env_var, ok := d.GetOk("result_conn.0.private_key_env_var")
+	private_key_env_var, ok := d.GetOk("conn.0.private_key_env_var")
 	if ok {
 		private_key := os.Getenv(private_key_env_var.(string))
 		signer, err := ssh.ParsePrivateKey([]byte(private_key))
@@ -117,7 +117,7 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	enableAgent, ok := d.GetOk("result_conn.0.agent")
+	enableAgent, ok := d.GetOk("conn.0.agent")
 	if ok && enableAgent.(bool) {
 		connection, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 		if err != nil {
@@ -126,6 +126,6 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(connection).Signers))
 	}
 
-	host := fmt.Sprintf("%s:%d", d.Get("result_conn.0.host").(string), d.Get("result_conn.0.port").(int))
+	host := fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int))
 	return host, &clientConfig, nil
 }

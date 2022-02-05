@@ -83,17 +83,15 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 	}
 }
 
-func (c *apiClient) applyResultConn(d *schema.ResourceData) (*schema.ResourceData, error) {
-	conn, ok := d.GetOk("conn")
+func (c *apiClient) getConnWithDefault(d *schema.ResourceData) (*schema.ResourceData, error) {
+	_, ok := d.GetOk("conn")
 	if ok {
-		d.Set("result_conn", conn)
 		return d, nil
 	}
 
-	conn, ok = c.resourceData.GetOk("conn")
+	_, ok = c.resourceData.GetOk("conn")
 	if ok {
-		d.Set("result_conn", conn)
-		return d, nil
+		return c.resourceData, nil
 	}
 
 	return nil, errors.New("neither the provider nor the resource/data source have a configured connection")
@@ -152,13 +150,13 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 
 func resourceConnectionHash(d *schema.ResourceData) string {
 	elements := []string{
-		d.Get("result_conn.0.host").(string),
-		d.Get("result_conn.0.user").(string),
-		strconv.Itoa(d.Get("result_conn.0.port").(int)),
-		resourceStringWithDefault(d, "result_conn.0.password", ""),
-		resourceStringWithDefault(d, "result_conn.0.private_key", ""),
-		resourceStringWithDefault(d, "result_conn.0.private_key_path", ""),
-		strconv.FormatBool(d.Get("result_conn.0.agent").(bool)),
+		d.Get("conn.0.host").(string),
+		d.Get("conn.0.user").(string),
+		strconv.Itoa(d.Get("conn.0.port").(int)),
+		resourceStringWithDefault(d, "conn.0.password", ""),
+		resourceStringWithDefault(d, "conn.0.private_key", ""),
+		resourceStringWithDefault(d, "conn.0.private_key_path", ""),
+		strconv.FormatBool(d.Get("conn.0.agent").(bool)),
 	}
 	return strings.Join(elements, "::")
 }

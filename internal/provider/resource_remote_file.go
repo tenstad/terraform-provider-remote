@@ -26,13 +26,6 @@ func resourceRemoteFile() *schema.Resource {
 				Description: "Connection to host where files are located.",
 				Elem:        connectionSchemaResource,
 			},
-			"result_conn": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "Computed conn for handling default functionality.",
-				Elem:        connectionSchemaResource,
-			},
 			"path": {
 				Description: "Path to file on remote host.",
 				Type:        schema.TypeString,
@@ -57,7 +50,7 @@ func resourceRemoteFile() *schema.Resource {
 }
 
 func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	d, err := meta.(*apiClient).applyResultConn(d)
+	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
@@ -66,14 +59,14 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	path := d.Get("path").(string)
 	permissions := d.Get("permissions").(string)
 
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("result_conn.0.host").(string), path))
+	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), path))
 
-	client, err := meta.(*apiClient).getRemoteClient(d)
+	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
-	sudo, ok := d.GetOk("result_conn.0.sudo")
+	sudo, ok := conn.GetOk("conn.0.sudo")
 	if ok && sudo.(bool) {
 		err := client.WriteFileSudo(content, path)
 		if err != nil {
@@ -90,7 +83,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	err = meta.(*apiClient).closeRemoteClient(d)
+	err = meta.(*apiClient).closeRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("error while closing remote client: %s", err.Error())
 	}
@@ -99,21 +92,21 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	d, err := meta.(*apiClient).applyResultConn(d)
+	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
 
 	path := d.Get("path").(string)
 
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("result_conn.0.host").(string), path))
+	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), path))
 
-	client, err := meta.(*apiClient).getRemoteClient(d)
+	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
-	sudo, ok := d.GetOk("result_conn.0.sudo")
+	sudo, ok := conn.GetOk("conn.0.sudo")
 	if ok && sudo.(bool) {
 		exists, err := client.FileExistsSudo(path)
 		if err != nil {
@@ -136,7 +129,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		d.Set("content", content)
 	}
 
-	err = meta.(*apiClient).closeRemoteClient(d)
+	err = meta.(*apiClient).closeRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("error while closing remote client: %s", err.Error())
 	}
@@ -149,19 +142,19 @@ func resourceRemoteFileUpdate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	d, err := meta.(*apiClient).applyResultConn(d)
+	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.Errorf(err.Error())
 	}
 
-	client, err := meta.(*apiClient).getRemoteClient(d)
+	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("error while opening remote client: %s", err.Error())
 	}
 
 	path := d.Get("path").(string)
 
-	sudo, ok := d.GetOk("result_conn.0.sudo")
+	sudo, ok := conn.GetOk("conn.0.sudo")
 	if ok && sudo.(bool) {
 		exists, err := client.FileExistsSudo(path)
 		if err != nil {
@@ -182,7 +175,7 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	err = meta.(*apiClient).closeRemoteClient(d)
+	err = meta.(*apiClient).closeRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("error while closing remote client: %s", err.Error())
 	}

@@ -52,7 +52,6 @@ data "remote_file" "server2_hosts" {
 ### Read-Only
 
 - **content** (String) Content of file.
-- **result_conn** (List of Object) Result of applying provider's `conn` as default to optional `conn` (see [below for nested schema](#nestedatt--result_conn))
 
 <a id="nestedblock--conn"></a>
 ### Nested Schema for `conn`
@@ -71,21 +70,5 @@ Optional:
 - **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
 - **private_key_path** (String) The local path to the private key used to login to the remote host.
 - **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.
-
-
-<a id="nestedatt--result_conn"></a>
-### Nested Schema for `result_conn`
-
-Read-Only:
-
-- **agent** (Boolean)
-- **host** (String)
-- **password** (String)
-- **port** (Number)
-- **private_key** (String)
-- **private_key_env_var** (String)
-- **private_key_path** (String)
-- **sudo** (Boolean)
-- **user** (String)
 
 
