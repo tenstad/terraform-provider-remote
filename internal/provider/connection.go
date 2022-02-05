@@ -23,6 +23,7 @@ var connectionSchemaResource = &schema.Resource{
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     22,
+			ForceNew:    true,
 			Description: "The ssh port on the remote host.",
 		},
 		"user": {
