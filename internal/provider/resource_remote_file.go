@@ -59,7 +59,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	path := d.Get("path").(string)
 	permissions := d.Get("permissions").(string)
 
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), path))
+	d.SetId(fmt.Sprintf("%s:%s", conn.Get("conn.0.host").(string), path))
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
@@ -99,7 +99,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	path := d.Get("path").(string)
 
-	d.SetId(fmt.Sprintf("%s:%s", d.Get("conn.0.host").(string), path))
+	d.SetId(fmt.Sprintf("%s:%s", conn.Get("conn.0.host").(string), path))
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
