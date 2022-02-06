@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,11 +54,10 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
+	setResourceID(d, conn)
 	content := d.Get("content").(string)
 	path := d.Get("path").(string)
 	permissions := d.Get("permissions").(string)
-
-	d.SetId(fmt.Sprintf("%s:%s", conn.Get("conn.0.host").(string), path))
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
@@ -97,9 +95,8 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf(err.Error())
 	}
 
+	setResourceID(d, conn)
 	path := d.Get("path").(string)
-
-	d.SetId(fmt.Sprintf("%s:%s", conn.Get("conn.0.host").(string), path))
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {

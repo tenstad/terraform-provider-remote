@@ -29,6 +29,8 @@ func TestAccDataSourceRemoteFile(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
+						"data.remote_file.data_1", "id", regexp.MustCompile("remotehost:22:/tmp/data_1.txt")),
+					resource.TestMatchResourceAttr(
 						"data.remote_file.data_1", "content", regexp.MustCompile("data_1")),
 				),
 			},
