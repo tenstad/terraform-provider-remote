@@ -148,6 +148,14 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 	return nil
 }
 
+func setResourceID(d *schema.ResourceData, conn *schema.ResourceData) {
+	id := fmt.Sprintf("%s:%d:%s",
+		conn.Get("conn.0.host").(string),
+		conn.Get("conn.0.port").(int),
+		d.Get("path").(string))
+	d.SetId(id)
+}
+
 func resourceConnectionHash(d *schema.ResourceData) string {
 	elements := []string{
 		d.Get("conn.0.host").(string),
