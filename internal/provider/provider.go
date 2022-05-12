@@ -89,6 +89,9 @@ func (c *apiClient) getConnWithDefault(d *schema.ResourceData) (*schema.Resource
 		return d, nil
 	}
 
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	
 	_, ok = c.resourceData.GetOk("conn")
 	if ok {
 		return c.resourceData, nil
