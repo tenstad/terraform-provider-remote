@@ -44,6 +44,20 @@ func resourceRemoteFile() *schema.Resource {
 				Default:     "0644",
 				Optional:    true,
 			},
+			"group": {
+				Description: "Group (GID) of file.",
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				// Default:     "0644",
+				Optional: true,
+			},
+			"owner": {
+				Description: "Owner (UID) of file.",
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				// Default:     "0644",
+				Optional: true,
+			},
 		},
 	}
 }
@@ -58,6 +72,8 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	content := d.Get("content").(string)
 	path := d.Get("path").(string)
 	permissions := d.Get("permissions").(string)
+	group := d.Get("group").(string)
+	owner := d.Get("owner").(string)
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
@@ -73,6 +89,18 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		err = client.ChmodFileSudo(path, permissions)
 		if err != nil {
 			return diag.Errorf("error while changing permissions of remote file with sudo: %s", err.Error())
+		}
+		if group != "" {
+			err = client.ChgrpFileSudo(path, group)
+			if err != nil {
+				return diag.Errorf("error while changing group of remote file with sudo: %s", err.Error())
+			}
+		}
+		if owner != "" {
+			err = client.ChownFileSudo(path, owner)
+			if err != nil {
+				return diag.Errorf("error while changing owner of remote file with sudo: %s", err.Error())
+			}
 		}
 	} else {
 		err := client.WriteFile(content, path, permissions)

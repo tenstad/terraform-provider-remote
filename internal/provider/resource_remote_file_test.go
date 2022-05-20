@@ -25,6 +25,8 @@ func TestAccResourceRemoteFile(t *testing.T) {
 				  path = "/tmp/resource_1.txt"
 				  content = "resource_1"
 				  permissions = "0777"
+					group = "1000"
+					owner = "1000"
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
@@ -45,7 +47,7 @@ func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 				Config: `
 				resource "remote_file" "resource_2" {
 					provider = remotehost
-				
+
 					path = "/tmp/resource_2.txt"
 					content = "resource_2"
 				  }

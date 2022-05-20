@@ -60,6 +60,32 @@ func (c *RemoteClient) ChmodFileSudo(path string, permissions string) error {
 	return session.Run(cmd)
 }
 
+func (c *RemoteClient) ChgrpFileSudo(path string, group string) error {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("sudo chgrp %s %s", group, path)
+	return session.Run(cmd)
+}
+
+func (c *RemoteClient) ChownFileSudo(path string, owner string) error {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("sudo chown %s %s", owner, path)
+	return session.Run(cmd)
+}
+
 func (c *RemoteClient) FileExistsSudo(path string) (bool, error) {
 	sshClient := c.GetSSHClient()
 
