@@ -60,7 +60,7 @@ func (c *RemoteClient) ChmodFileSudo(path string, permissions string) error {
 	return session.Run(cmd)
 }
 
-func (c *RemoteClient) ChgrpFileSudo(path string, group string) error {
+func (c *RemoteClient) ChgrpFile(path string, group string, sudo bool) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -69,11 +69,15 @@ func (c *RemoteClient) ChgrpFileSudo(path string, group string) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprintf("sudo chgrp %s %s", group, path)
+	cmd := fmt.Sprintf("chgrp %s %s", group, path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo chgrp %s %s", group, path)
+	}
+
 	return session.Run(cmd)
 }
 
-func (c *RemoteClient) ChownFileSudo(path string, owner string) error {
+func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -82,7 +86,10 @@ func (c *RemoteClient) ChownFileSudo(path string, owner string) error {
 	}
 	defer session.Close()
 
-	cmd := fmt.Sprintf("sudo chown %s %s", owner, path)
+	cmd := fmt.Sprintf("chown %s %s", owner, path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo chown %s %s", owner, path)
+	}
 	return session.Run(cmd)
 }
 
