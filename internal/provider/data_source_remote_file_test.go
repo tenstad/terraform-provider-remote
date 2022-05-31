@@ -32,6 +32,12 @@ func TestAccDataSourceRemoteFile(t *testing.T) {
 						"data.remote_file.data_1", "id", regexp.MustCompile("remotehost:22:/tmp/data_1.txt")),
 					resource.TestMatchResourceAttr(
 						"data.remote_file.data_1", "content", regexp.MustCompile("data_1")),
+					resource.TestMatchResourceAttr(
+						"data.remote_file.data_1", "permissions", regexp.MustCompile("0644")),
+					resource.TestMatchResourceAttr(
+						"data.remote_file.data_1", "owner", regexp.MustCompile("0")),
+					resource.TestMatchResourceAttr(
+						"data.remote_file.data_1", "group", regexp.MustCompile("0")),
 				),
 			},
 		},
@@ -50,7 +56,7 @@ func TestAccDataSourceRemoteFileOverridingDefaultConnection(t *testing.T) {
 				Config: `
 				data "remote_file" "data_2" {
 					provider = remotehost
-				
+
 					conn {
 						host = "remotehost2"
 						user = "root"
@@ -124,7 +130,7 @@ func TestAccDataSourceRemoteFilePrivateKey(t *testing.T) {
 						7nV0RNZTkbGkeawFj3OkO3UTlp2tRlfg0Af1UFua3A0i549K6LLyJ+sbBZob2uQ82nFLMH
 						qzkAN0Ak0GUACI33uwRuOdfZSZSa+vycgEnu6nxlzji2mmSIRNA18eO34BLB4YCCPzlLUW
 						MAA8unhAGhqmLdAAAAEXJvb3RAZmU1ODIxNTczYjA2AQ==
-						-----END OPENSSH PRIVATE KEY-----						
+						-----END OPENSSH PRIVATE KEY-----
 						EOT
 					}
 					path = "/tmp/data_3.txt"
