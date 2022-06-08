@@ -156,13 +156,11 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("error while reading remote file with sudo: %s", err.Error())
 			}
 			d.Set("content", content)
-			if permissions != "" {
-				permissions, err := client.ReadFilePermissions(path, true)
-				if err != nil {
-					return diag.Errorf("error while reading remote file permissions with sudo: %s", err.Error())
-				}
-				d.Set("permissions", permissions)
+			permissions, err := client.ReadFilePermissions(path, true)
+			if err != nil {
+				return diag.Errorf("error while reading remote file permissions with sudo: %s", err.Error())
 			}
+			d.Set("permissions", permissions)
 			if owner != "" {
 				owner, err := client.ReadFileOwner(path, true)
 				if err != nil {
@@ -186,13 +184,11 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 			return diag.Errorf("error while reading remote file: %s", err.Error())
 		}
 		d.Set("content", content)
-		if permissions != "" {
-			permissions, err := client.ReadFilePermissions(path, false)
-			if err != nil {
-				return diag.Errorf("error while reading remote file permissions: %s", err.Error())
-			}
-			d.Set("permissions", permissions)
+		permissions, err := client.ReadFilePermissions(path, false)
+		if err != nil {
+			return diag.Errorf("error while reading remote file permissions: %s", err.Error())
 		}
+		d.Set("permissions", permissions)
 		if owner != "" {
 			owner, err := client.ReadFileOwner(path, false)
 			if err != nil {
