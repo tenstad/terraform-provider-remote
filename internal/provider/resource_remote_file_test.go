@@ -16,15 +16,15 @@ func TestAccResourceRemoteFile(t *testing.T) {
 			{
 				Config: `
 				resource "remote_file" "resource_1" {
-				  conn {
-					  host = "remotehost"
-					  user = "root"
-					  sudo = true
-					  password = "password"
-				  }
-				  path = "/tmp/resource_1.txt"
-				  content = "resource_1"
-				  permissions = "0777"
+					conn {
+						host = "remotehost"
+						user = "root"
+						sudo = true
+						password = "password"
+					}
+					path = "/tmp/resource_1.txt"
+					content = "resource_1"
+					permissions = "0777"
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
@@ -48,7 +48,7 @@ func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 
 					path = "/tmp/resource_2.txt"
 					content = "resource_2"
-				  }
+				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
@@ -80,7 +80,7 @@ func TestAccResourceRemoteFileWithAgent(t *testing.T) {
 					}
 					path = "/tmp/resource_3.txt"
 					content = "resource_3"
-				  }
+				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
@@ -99,15 +99,15 @@ func TestAccResourceRemoteFileOwnership(t *testing.T) {
 			{
 				Config: `
 				resource "remote_file" "resource_4" {
-				  conn {
-					  host = "remotehost"
-					  user = "root"
-					  sudo = true
-					  password = "password"
-				  }
-				  path = "/tmp/resource_4.txt"
-				  content = "resource_4"
-				  permissions = "0777"
+					conn {
+						host = "remotehost"
+						user = "root"
+						sudo = true
+						password = "password"
+					}
+					path = "/tmp/resource_4.txt"
+					content = "resource_4"
+					permissions = "0777"
 					owner = "1000"
 					group = "1001"
 				}
@@ -132,8 +132,8 @@ func TestAccResourceRemoteFileOwnershipWithDefaultConnection(t *testing.T) {
 				Config: `
 				resource "remote_file" "resource_5" {
 					provider = remotehost
-				  path = "/tmp/resource_5.txt"
-				  content = "resource_5"
+					path = "/tmp/resource_5.txt"
+					content = "resource_5"
 					owner = "1000"
 					group = "1001"
 				}
