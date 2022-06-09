@@ -38,10 +38,22 @@ func resourceRemoteFile() *schema.Resource {
 				Required:    true,
 			},
 			"permissions": {
-				Description: "Permissions of file.",
+				Description: "Permissions of file (in octal form).",
 				Type:        schema.TypeString,
-				ForceNew:    true,
+				ForceNew:    false,
 				Default:     "0644",
+				Optional:    true,
+			},
+			"group": {
+				Description: "Group (GID) of file.",
+				Type:        schema.TypeString,
+				ForceNew:    false,
+				Optional:    true,
+			},
+			"owner": {
+				Description: "Owner (UID) of file.",
+				Type:        schema.TypeString,
+				ForceNew:    false,
 				Optional:    true,
 			},
 		},
@@ -58,6 +70,8 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	content := d.Get("content").(string)
 	path := d.Get("path").(string)
 	permissions := d.Get("permissions").(string)
+	group := d.Get("group").(string)
+	owner := d.Get("owner").(string)
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
@@ -74,10 +88,34 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		if err != nil {
 			return diag.Errorf("error while changing permissions of remote file with sudo: %s", err.Error())
 		}
+		if group != "" {
+			err = client.ChgrpFile(path, group, true)
+			if err != nil {
+				return diag.Errorf("error while changing group of remote file with sudo: %s", err.Error())
+			}
+		}
+		if owner != "" {
+			err = client.ChownFile(path, owner, true)
+			if err != nil {
+				return diag.Errorf("error while changing owner of remote file with sudo: %s", err.Error())
+			}
+		}
 	} else {
 		err := client.WriteFile(content, path, permissions)
 		if err != nil {
 			return diag.Errorf("error while creating remote file: %s", err.Error())
+		}
+		if group != "" {
+			err = client.ChgrpFile(path, group, false)
+			if err != nil {
+				return diag.Errorf("error while changing group of remote file: %s", err.Error())
+			}
+		}
+		if owner != "" {
+			err = client.ChownFile(path, owner, false)
+			if err != nil {
+				return diag.Errorf("error while changing owner of remote file: %s", err.Error())
+			}
 		}
 	}
 
@@ -97,6 +135,9 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	setResourceID(d, conn)
 	path := d.Get("path").(string)
+	permissions := d.Get("permissions").(string)
+	group := d.Get("group").(string)
+	owner := d.Get("owner").(string)
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
@@ -115,6 +156,25 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("error while reading remote file with sudo: %s", err.Error())
 			}
 			d.Set("content", content)
+			permissions, err := client.ReadFilePermissions(path, true)
+			if err != nil {
+				return diag.Errorf("error while reading remote file permissions with sudo: %s", err.Error())
+			}
+			d.Set("permissions", permissions)
+			if owner != "" {
+				owner, err := client.ReadFileOwner(path, true)
+				if err != nil {
+					return diag.Errorf("error while reading remote file owner with sudo: %s", err.Error())
+				}
+				d.Set("owner", owner)
+			}
+			if group != "" {
+				group, err := client.ReadFileGroup(path, true)
+				if err != nil {
+					return diag.Errorf("error while reading remote file group with sudo: %s", err.Error())
+				}
+				d.Set("group", group)
+			}
 		} else {
 			return diag.Errorf("cannot read file, it does not exist.")
 		}
@@ -124,6 +184,25 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 			return diag.Errorf("error while reading remote file: %s", err.Error())
 		}
 		d.Set("content", content)
+		permissions, err := client.ReadFilePermissions(path, false)
+		if err != nil {
+			return diag.Errorf("error while reading remote file permissions: %s", err.Error())
+		}
+		d.Set("permissions", permissions)
+		if owner != "" {
+			owner, err := client.ReadFileOwner(path, false)
+			if err != nil {
+				return diag.Errorf("error while reading remote file owner: %s", err.Error())
+			}
+			d.Set("owner", owner)
+		}
+		if group != "" {
+			group, err := client.ReadFileGroup(path, false)
+			if err != nil {
+				return diag.Errorf("error while reading remote file group: %s", err.Error())
+			}
+			d.Set("group", group)
+		}
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(conn)

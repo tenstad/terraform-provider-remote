@@ -60,6 +60,39 @@ func (c *RemoteClient) ChmodFileSudo(path string, permissions string) error {
 	return session.Run(cmd)
 }
 
+func (c *RemoteClient) ChgrpFile(path string, group string, sudo bool) error {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("chgrp %s %s", group, path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo chgrp %s %s", group, path)
+	}
+
+	return session.Run(cmd)
+}
+
+func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("chown %s %s", owner, path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo chown %s %s", owner, path)
+	}
+	return session.Run(cmd)
+}
+
 func (c *RemoteClient) FileExistsSudo(path string) (bool, error) {
 	sshClient := c.GetSSHClient()
 
@@ -124,6 +157,75 @@ func (c *RemoteClient) ReadFileSudo(path string) (string, error) {
 	}
 
 	return string(content), nil
+}
+
+func (c *RemoteClient) ReadFilePermissions(path string, sudo bool) (string, error) {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("stat -c %%a %s", path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo %s", cmd)
+	}
+	output, err := session.Output(cmd)
+	if err != nil {
+		return "", err
+	}
+
+	permissions := strings.ReplaceAll(string(output), "\n", "")
+	if len(permissions) > 0 && len(permissions) < 4 {
+		permissions = fmt.Sprintf("0%s", permissions)
+	}
+	return permissions, nil
+}
+
+func (c *RemoteClient) ReadFileOwner(path string, sudo bool) (string, error) {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("stat -c %%u %s", path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo %s", cmd)
+	}
+	output, err := session.Output(cmd)
+	if err != nil {
+		return "", err
+	}
+
+	owner := strings.ReplaceAll(string(output), "\n", "")
+	return owner, nil
+}
+
+func (c *RemoteClient) ReadFileGroup(path string, sudo bool) (string, error) {
+	sshClient := c.GetSSHClient()
+
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.Close()
+
+	cmd := fmt.Sprintf("stat -c %%g %s", path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo %s", cmd)
+	}
+	output, err := session.Output(cmd)
+	if err != nil {
+		return "", err
+	}
+
+	group := strings.ReplaceAll(string(output), "\n", "")
+	return group, nil
 }
 
 func (c *RemoteClient) DeleteFile(path string) error {
