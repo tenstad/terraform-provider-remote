@@ -135,7 +135,6 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	setResourceID(d, conn)
 	path := d.Get("path").(string)
-	permissions := d.Get("permissions").(string)
 	group := d.Get("group").(string)
 	owner := d.Get("owner").(string)
 

@@ -56,7 +56,6 @@ func TestAccDataSourceRemoteFileOverridingDefaultConnection(t *testing.T) {
 				Config: `
 				data "remote_file" "data_2" {
 					provider = remotehost
-
 					conn {
 						host = "remotehost2"
 						user = "root"
