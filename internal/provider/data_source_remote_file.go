@@ -25,7 +25,6 @@ func dataSourceRemoteFile() *schema.Resource {
 			"path": {
 				Description: "Path to file on remote host.",
 				Type:        schema.TypeString,
-				ForceNew:    true,
 				Required:    true,
 			},
 			"content": {
