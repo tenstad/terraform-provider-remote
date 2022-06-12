@@ -1,21 +1,23 @@
+CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
+
 .PHONY: test
 default: test
 
 # Start host containers used for playground and testing
 hosts: clean
-	docker network create remote
-	docker build -t remotehost tests
-	docker run --rm -d --net remote --name remotehost -p 8022:22 remotehost
-	docker run --rm -d --net remote --name remotehost2 -p 8023:22 remotehost
+	$(CONTAINER_RUNTIME) network create remote
+	$(CONTAINER_RUNTIME) build -t remotehost tests
+	$(CONTAINER_RUNTIME) run --rm -d --net remote --name remotehost -p 8022:22 remotehost
+	$(CONTAINER_RUNTIME) run --rm -d --net remote --name remotehost2 -p 8023:22 remotehost
 
 # Stop containers
 clean:
-	docker rm -f remotehost remotehost2
-	docker network rm remote || true
+	$(CONTAINER_RUNTIME) rm -f remotehost remotehost2 || true
+	$(CONTAINER_RUNTIME) network rm remote || true
 
 # Run acceptance tests
 test: hosts
-	docker run --rm --net remote -v $(PWD):/app -v ~/go:/go --workdir /app \
+	$(CONTAINER_RUNTIME) run --rm --net remote -v ~/go:/go:z -v $(PWD):/provider:z --workdir /provider \
 	-e "TF_ACC=1" -e "TF_ACC_TERRAFORM_VERSION=1.0.11" -e "TESTARGS=$(TESTARGS)" \
 	golang:1.16 bash tests/test.sh
 
