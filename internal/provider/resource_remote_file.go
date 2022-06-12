@@ -84,7 +84,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		if err != nil {
 			return diag.Errorf("error while creating remote file with sudo: %s", err.Error())
 		}
-		err = client.ChmodFileSudo(path, permissions)
+		err = client.ChmodFile(path, permissions, true)
 		if err != nil {
 			return diag.Errorf("error while changing permissions of remote file with sudo: %s", err.Error())
 		}
@@ -104,6 +104,10 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		err := client.WriteFile(content, path, permissions)
 		if err != nil {
 			return diag.Errorf("error while creating remote file: %s", err.Error())
+		}
+		err = client.ChmodFile(path, permissions, false)
+		if err != nil {
+			return diag.Errorf("error while changing permissions of remote file: %s", err.Error())
 		}
 		if group != "" {
 			err = client.ChgrpFile(path, group, false)
