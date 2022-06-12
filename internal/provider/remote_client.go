@@ -251,7 +251,14 @@ func (c *RemoteClient) ReadFileGroup(path string, sudo bool) (string, error) {
 	return group, nil
 }
 
-func (c *RemoteClient) DeleteFile(path string) error {
+func (c *RemoteClient) DeleteFile(path string, sudo bool) error {
+	if sudo {
+		return c.DeleteFileShell(path)
+	}
+	return c.DeleteFileSFTP(path)
+}
+
+func (c *RemoteClient) DeleteFileSFTP(path string) error {
 	sftpClient, err := c.GetSFTPClient()
 	if err != nil {
 		return err
@@ -261,7 +268,7 @@ func (c *RemoteClient) DeleteFile(path string) error {
 	return sftpClient.Remove(path)
 }
 
-func (c *RemoteClient) DeleteFileSudo(path string) error {
+func (c *RemoteClient) DeleteFileShell(path string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
