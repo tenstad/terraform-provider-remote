@@ -62,65 +62,65 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
-		return diag.Errorf("error while opening remote client: %s", err.Error())
+		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
 	sudo, ok := conn.GetOk("conn.0.sudo")
 	if ok && sudo.(bool) {
 		exists, err := client.FileExistsSudo(path)
 		if err != nil {
-			return diag.Errorf("error while checking if remote file exists with sudo: %s", err.Error())
+			return diag.Errorf("unable to check if remote file exists with sudo: %s", err.Error())
 		}
 		if exists {
 			content, err := client.ReadFileSudo(path)
 			if err != nil {
-				return diag.Errorf("error while reading remote file with sudo: %s", err.Error())
+				return diag.Errorf("unable to read remote file with sudo: %s", err.Error())
 			}
 			d.Set("content", content)
 			permissions, err := client.ReadFilePermissions(path, true)
 			if err != nil {
-				return diag.Errorf("error while reading remote file permissions with sudo: %s", err.Error())
+				return diag.Errorf("unable to read remote file permissions with sudo: %s", err.Error())
 			}
 			d.Set("permissions", permissions)
 			owner, err := client.ReadFileOwner(path, true)
 			if err != nil {
-				return diag.Errorf("error while reading remote file owner with sudo: %s", err.Error())
+				return diag.Errorf("unable to read remote file owner with sudo: %s", err.Error())
 			}
 			d.Set("owner", owner)
 			group, err := client.ReadFileGroup(path, true)
 			if err != nil {
-				return diag.Errorf("error while reading remote file group with sudo: %s", err.Error())
+				return diag.Errorf("unable to read remote file group with sudo: %s", err.Error())
 			}
 			d.Set("group", group)
 		} else {
-			return diag.Errorf("cannot read file, it does not exist.")
+			return diag.Errorf("cannot read remote file, it does not exist.")
 		}
 	} else {
 		content, err := client.ReadFile(path)
 		if err != nil {
-			return diag.Errorf("error while reading remote file: %s", err.Error())
+			return diag.Errorf("unable to read remote file: %s", err.Error())
 		}
 		d.Set("content", content)
 		permissions, err := client.ReadFilePermissions(path, false)
 		if err != nil {
-			return diag.Errorf("error while reading remote file permissions: %s", err.Error())
+			return diag.Errorf("unable to read remote file permissions: %s", err.Error())
 		}
 		d.Set("permissions", permissions)
 		owner, err := client.ReadFileOwner(path, false)
 		if err != nil {
-			return diag.Errorf("error while reading remote file owner: %s", err.Error())
+			return diag.Errorf("unable to read remote file owner: %s", err.Error())
 		}
 		d.Set("owner", owner)
 		group, err := client.ReadFileGroup(path, false)
 		if err != nil {
-			return diag.Errorf("error while reading remote file group: %s", err.Error())
+			return diag.Errorf("unable to read remote file group: %s", err.Error())
 		}
 		d.Set("group", group)
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(conn)
 	if err != nil {
-		return diag.Errorf("error while closing remote client: %s", err.Error())
+		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 
 	return diag.Diagnostics{}
