@@ -136,36 +136,36 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("unable to check if remote file exists: %s", err.Error())
 	}
-	if !exists {
-		return diag.Errorf("cannot read remote file, it does not exist.")
-	}
-
-	content, err := client.ReadFile(path, sudo)
-	if err != nil {
-		return diag.Errorf("unable to read remote file: %s", err.Error())
-	}
-	d.Set("content", content)
-
-	permissions, err := client.ReadFilePermissions(path, sudo)
-	if err != nil {
-		return diag.Errorf("unable to read remote file permissions: %s", err.Error())
-	}
-	d.Set("permissions", permissions)
-
-	if owner != "" {
-		owner, err := client.ReadFileOwner(path, sudo)
+	if exists {
+		content, err := client.ReadFile(path, sudo)
 		if err != nil {
-			return diag.Errorf("unable to read remote file owner: %s", err.Error())
+			return diag.Errorf("unable to read remote file: %s", err.Error())
 		}
-		d.Set("owner", owner)
-	}
+		d.Set("content", content)
 
-	if group != "" {
-		group, err := client.ReadFileGroup(path, sudo)
+		permissions, err := client.ReadFilePermissions(path, sudo)
 		if err != nil {
-			return diag.Errorf("unable to read remote file group: %s", err.Error())
+			return diag.Errorf("unable to read remote file permissions: %s", err.Error())
 		}
-		d.Set("group", group)
+		d.Set("permissions", permissions)
+
+		if owner != "" {
+			owner, err := client.ReadFileOwner(path, sudo)
+			if err != nil {
+				return diag.Errorf("unable to read remote file owner: %s", err.Error())
+			}
+			d.Set("owner", owner)
+		}
+
+		if group != "" {
+			group, err := client.ReadFileGroup(path, sudo)
+			if err != nil {
+				return diag.Errorf("unable to read remote file group: %s", err.Error())
+			}
+			d.Set("group", group)
+		}
+	} else {
+		d.SetId("")
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(conn)
@@ -199,13 +199,11 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("unable to check if remote file exists: %s", err.Error())
 	}
-	if !exists {
-		return diag.Errorf("cannot delete remote file, it does not exist.")
-	}
-
-	err = client.DeleteFile(path, sudo)
-	if err != nil {
-		return diag.Errorf("unable to delete remote file: %s", err.Error())
+	if exists {
+		err = client.DeleteFile(path, sudo)
+		if err != nil {
+			return diag.Errorf("unable to delete remote file: %s", err.Error())
+		}
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(conn)
