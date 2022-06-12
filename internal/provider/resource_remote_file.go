@@ -67,59 +67,41 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	setResourceID(d, conn)
-	content := d.Get("content").(string)
-	path := d.Get("path").(string)
-	permissions := d.Get("permissions").(string)
-	group := d.Get("group").(string)
-	owner := d.Get("owner").(string)
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
-	sudo, ok := conn.GetOk("conn.0.sudo")
-	if ok && sudo.(bool) {
-		err := client.WriteFile(content, path, permissions, true)
+	conn_sudo, ok := conn.GetOk("conn.0.sudo")
+	sudo := ok && conn_sudo.(bool)
+	content := d.Get("content").(string)
+	path := d.Get("path").(string)
+	permissions := d.Get("permissions").(string)
+	group := d.Get("group").(string)
+	owner := d.Get("owner").(string)
+
+	err = client.WriteFile(content, path, permissions, sudo)
+	if err != nil {
+		return diag.Errorf("unable to create remote file: %s", err.Error())
+	}
+
+	err = client.ChmodFile(path, permissions, sudo)
+	if err != nil {
+		return diag.Errorf("unable to change permissions of remote file: %s", err.Error())
+	}
+
+	if group != "" {
+		err = client.ChgrpFile(path, group, sudo)
 		if err != nil {
-			return diag.Errorf("unable to create remote file with sudo: %s", err.Error())
+			return diag.Errorf("unable to change group of remote file: %s", err.Error())
 		}
-		err = client.ChmodFile(path, permissions, true)
+	}
+
+	if owner != "" {
+		err = client.ChownFile(path, owner, sudo)
 		if err != nil {
-			return diag.Errorf("unable to change permissions of remote file with sudo: %s", err.Error())
-		}
-		if group != "" {
-			err = client.ChgrpFile(path, group, true)
-			if err != nil {
-				return diag.Errorf("unable to change group of remote file with sudo: %s", err.Error())
-			}
-		}
-		if owner != "" {
-			err = client.ChownFile(path, owner, true)
-			if err != nil {
-				return diag.Errorf("unable to change owner of remote file with sudo: %s", err.Error())
-			}
-		}
-	} else {
-		err := client.WriteFile(content, path, permissions, false)
-		if err != nil {
-			return diag.Errorf("unable to create remote file: %s", err.Error())
-		}
-		err = client.ChmodFile(path, permissions, false)
-		if err != nil {
-			return diag.Errorf("unable to change permissions of remote file: %s", err.Error())
-		}
-		if group != "" {
-			err = client.ChgrpFile(path, group, false)
-			if err != nil {
-				return diag.Errorf("unable to change group of remote file: %s", err.Error())
-			}
-		}
-		if owner != "" {
-			err = client.ChownFile(path, owner, false)
-			if err != nil {
-				return diag.Errorf("unable to change owner of remote file: %s", err.Error())
-			}
+			return diag.Errorf("unable to change owner of remote file: %s", err.Error())
 		}
 	}
 
@@ -138,82 +120,52 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	setResourceID(d, conn)
-	path := d.Get("path").(string)
-	group := d.Get("group").(string)
-	owner := d.Get("owner").(string)
 
 	client, err := meta.(*apiClient).getRemoteClient(conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
-	sudo, ok := conn.GetOk("conn.0.sudo")
-	if ok && sudo.(bool) {
-		exists, err := client.FileExists(path, true)
+	conn_sudo, ok := conn.GetOk("conn.0.sudo")
+	sudo := ok && conn_sudo.(bool)
+	path := d.Get("path").(string)
+	group := d.Get("group").(string)
+	owner := d.Get("owner").(string)
+
+	exists, err := client.FileExists(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to check if remote file exists: %s", err.Error())
+	}
+	if !exists {
+		return diag.Errorf("cannot read remote file, it does not exist.")
+	}
+
+	content, err := client.ReadFile(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to read remote file: %s", err.Error())
+	}
+	d.Set("content", content)
+
+	permissions, err := client.ReadFilePermissions(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to read remote file permissions: %s", err.Error())
+	}
+	d.Set("permissions", permissions)
+
+	if owner != "" {
+		owner, err := client.ReadFileOwner(path, sudo)
 		if err != nil {
-			return diag.Errorf("unable to check if remote file exists with sudo: %s", err.Error())
+			return diag.Errorf("unable to read remote file owner: %s", err.Error())
 		}
-		if exists {
-			content, err := client.ReadFile(path, true)
-			if err != nil {
-				return diag.Errorf("unable to read remote file with sudo: %s", err.Error())
-			}
-			d.Set("content", content)
-			permissions, err := client.ReadFilePermissions(path, true)
-			if err != nil {
-				return diag.Errorf("unable to read remote file permissions with sudo: %s", err.Error())
-			}
-			d.Set("permissions", permissions)
-			if owner != "" {
-				owner, err := client.ReadFileOwner(path, true)
-				if err != nil {
-					return diag.Errorf("unable to read remote file owner with sudo: %s", err.Error())
-				}
-				d.Set("owner", owner)
-			}
-			if group != "" {
-				group, err := client.ReadFileGroup(path, true)
-				if err != nil {
-					return diag.Errorf("unable to read remote file group with sudo: %s", err.Error())
-				}
-				d.Set("group", group)
-			}
-		} else {
-			return diag.Errorf("cannot read remote file, it does not exist.")
-		}
-	} else {
-		exists, err := client.FileExists(path, false)
+		d.Set("owner", owner)
+	}
+
+	if group != "" {
+		group, err := client.ReadFileGroup(path, sudo)
 		if err != nil {
-			return diag.Errorf("unable to check if remote file exists: %s", err.Error())
+			return diag.Errorf("unable to read remote file group: %s", err.Error())
 		}
-		if exists {
-			content, err := client.ReadFile(path, false)
-			if err != nil {
-				return diag.Errorf("unable to read remote file: %s", err.Error())
-			}
-			d.Set("content", content)
-			permissions, err := client.ReadFilePermissions(path, false)
-			if err != nil {
-				return diag.Errorf("unable to read remote file permissions: %s", err.Error())
-			}
-			d.Set("permissions", permissions)
-			if owner != "" {
-				owner, err := client.ReadFileOwner(path, false)
-				if err != nil {
-					return diag.Errorf("unable to read remote file owner: %s", err.Error())
-				}
-				d.Set("owner", owner)
-			}
-			if group != "" {
-				group, err := client.ReadFileGroup(path, false)
-				if err != nil {
-					return diag.Errorf("unable to read remote file group: %s", err.Error())
-				}
-				d.Set("group", group)
-			}
-		} else {
-			return diag.Errorf("cannot read file, it does not exist.")
-		}
+		d.Set("group", group)
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(conn)
@@ -239,35 +191,21 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
+	conn_sudo, ok := conn.GetOk("conn.0.sudo")
+	sudo := ok && conn_sudo.(bool)
 	path := d.Get("path").(string)
 
-	sudo, ok := conn.GetOk("conn.0.sudo")
-	if ok && sudo.(bool) {
-		exists, err := client.FileExists(path, true)
-		if err != nil {
-			return diag.Errorf("unable to check if remote file exists with sudo: %s", err.Error())
-		}
-		if exists {
-			err := client.DeleteFileSudo(path)
-			if err != nil {
-				return diag.Errorf("unable to delete remote file with sudo: %s", err.Error())
-			}
-		} else {
-			return diag.Errorf("cannot delete remote file, it does not exist.")
-		}
-	} else {
-		exists, err := client.FileExists(path, false)
-		if err != nil {
-			return diag.Errorf("unable to check if remote file exists: %s", err.Error())
-		}
-		if exists {
-			err := client.DeleteFile(path)
-			if err != nil {
-				return diag.Errorf("unable to delete remote file: %s", err.Error())
-			}
-		} else {
-			return diag.Errorf("cannot delete remote file, it does not exist.")
-		}
+	exists, err := client.FileExists(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to check if remote file exists: %s", err.Error())
+	}
+	if !exists {
+		return diag.Errorf("cannot delete remote file, it does not exist.")
+	}
+
+	err = client.DeleteFile(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to delete remote file: %s", err.Error())
 	}
 
 	err = meta.(*apiClient).closeRemoteClient(conn)
