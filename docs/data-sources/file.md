@@ -42,33 +42,36 @@ data "remote_file" "server2_hosts" {
 
 ### Required
 
-- **path** (String) Path to file on remote host.
+- `path` (String) Path to file on remote host.
 
 ### Optional
 
-- **conn** (Block List, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
-- **id** (String) The ID of this resource.
+- `conn` (Block List, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
 
 ### Read-Only
 
-- **content** (String) Content of file.
+- `content` (String) Content of file.
+- `group` (String) Group (GID) of file.
+- `id` (String) The ID of this resource.
+- `owner` (String) Owner (UID) of file.
+- `permissions` (String) Permissions of file (in octal form).
 
 <a id="nestedblock--conn"></a>
 ### Nested Schema for `conn`
 
 Required:
 
-- **host** (String) The remote host.
-- **user** (String) The user on the remote host.
+- `host` (String) The remote host.
+- `user` (String) The user on the remote host.
 
 Optional:
 
-- **agent** (Boolean) Use a local SSH agent to login to the remote host. Defaults to `false`.
-- **password** (String, Sensitive) The pasword for the user on the remote host.
-- **port** (Number) The ssh port on the remote host. Defaults to `22`.
-- **private_key** (String, Sensitive) The private key used to login to the remote host.
-- **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
-- **private_key_path** (String) The local path to the private key used to login to the remote host.
-- **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.
+- `agent` (Boolean) Use a local SSH agent to login to the remote host. Defaults to `false`.
+- `password` (String, Sensitive) The pasword for the user on the remote host.
+- `port` (Number) The ssh port on the remote host. Defaults to `22`.
+- `private_key` (String, Sensitive) The private key used to login to the remote host.
+- `private_key_env_var` (String) The name of the local environment variable containing the private key used to login to the remote host.
+- `private_key_path` (String) The local path to the private key used to login to the remote host.
+- `sudo` (Boolean) Use sudo to gain access to file. Defaults to `false`.
 
 

@@ -52,23 +52,23 @@ provider "remote" {
 
 ### Optional
 
-- **conn** (Block List, Max: 1) Default connection to host where files are located. Can be overridden in resources and data sources. (see [below for nested schema](#nestedblock--conn))
-- **max_sessions** (Number) Maximum number of open sessions in each host connection. Defaults to `3`.
+- `conn` (Block List, Max: 1) Default connection to host where files are located. Can be overridden in resources and data sources. (see [below for nested schema](#nestedblock--conn))
+- `max_sessions` (Number) Maximum number of open sessions in each host connection. Defaults to `3`.
 
 <a id="nestedblock--conn"></a>
 ### Nested Schema for `conn`
 
 Required:
 
-- **host** (String) The remote host.
-- **user** (String) The user on the remote host.
+- `host` (String) The remote host.
+- `user` (String) The user on the remote host.
 
 Optional:
 
-- **agent** (Boolean) Use a local SSH agent to login to the remote host. Defaults to `false`.
-- **password** (String, Sensitive) The pasword for the user on the remote host.
-- **port** (Number) The ssh port on the remote host. Defaults to `22`.
-- **private_key** (String, Sensitive) The private key used to login to the remote host.
-- **private_key_env_var** (String) The name of the local environment variable containing the private key used to login to the remote host.
-- **private_key_path** (String) The local path to the private key used to login to the remote host.
-- **sudo** (Boolean) Use sudo to gain access to file. Defaults to `false`.
+- `agent` (Boolean) Use a local SSH agent to login to the remote host. Defaults to `false`.
+- `password` (String, Sensitive) The pasword for the user on the remote host.
+- `port` (Number) The ssh port on the remote host. Defaults to `22`.
+- `private_key` (String, Sensitive) The private key used to login to the remote host.
+- `private_key_env_var` (String) The name of the local environment variable containing the private key used to login to the remote host.
+- `private_key_path` (String) The local path to the private key used to login to the remote host.
+- `sudo` (Boolean) Use sudo to gain access to file. Defaults to `false`.
