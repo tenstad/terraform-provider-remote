@@ -10,6 +10,32 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+type Error struct {
+	cmd    string
+	err    error
+	stderr []byte
+}
+
+func (e Error) Error() string {
+	stderr := strings.TrimRight(string(e.stderr), "\n")
+	return fmt.Sprintf("`%s`\n  %s\n  %s", e.cmd, e.err, stderr)
+}
+
+func run(s *ssh.Session, cmd string) error {
+	var b bytes.Buffer
+	s.Stderr = &b
+	err := s.Run(cmd)
+
+	if err != nil {
+		return Error{
+			cmd:    cmd,
+			err:    err,
+			stderr: b.Bytes(),
+		}
+	}
+	return nil
+}
+
 type RemoteClient struct {
 	sshClient *ssh.Client
 }
@@ -51,7 +77,7 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 	}()
 
 	cmd := fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
-	return session.Run(cmd)
+	return run(session, cmd)
 }
 
 func (c *RemoteClient) ChmodFile(path string, permissions string, sudo bool) error {
@@ -67,7 +93,7 @@ func (c *RemoteClient) ChmodFile(path string, permissions string, sudo bool) err
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
-	return session.Run(cmd)
+	return run(session, cmd)
 }
 
 func (c *RemoteClient) ChgrpFile(path string, group string, sudo bool) error {
@@ -84,7 +110,7 @@ func (c *RemoteClient) ChgrpFile(path string, group string, sudo bool) error {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
 
-	return session.Run(cmd)
+	return run(session, cmd)
 }
 
 func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
@@ -100,7 +126,7 @@ func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
-	return session.Run(cmd)
+	return run(session, cmd)
 }
 
 func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
@@ -116,7 +142,7 @@ func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
-	err = session.Run(cmd)
+	err = run(session, cmd)
 
 	if err != nil {
 		session2, err := sshClient.NewSession()
@@ -278,7 +304,7 @@ func (c *RemoteClient) DeleteFileShell(path string) error {
 	defer session.Close()
 
 	cmd := fmt.Sprintf("sudo rm %s", path)
-	return session.Run(cmd)
+	return run(session, cmd)
 }
 
 func NewRemoteClient(host string, clientConfig *ssh.ClientConfig) (*RemoteClient, error) {
