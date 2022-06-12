@@ -34,26 +34,22 @@ func resourceRemoteFile() *schema.Resource {
 			"content": {
 				Description: "Content of file.",
 				Type:        schema.TypeString,
-				ForceNew:    true,
 				Required:    true,
 			},
 			"permissions": {
 				Description: "Permissions of file (in octal form).",
 				Type:        schema.TypeString,
-				ForceNew:    false,
 				Default:     "0644",
 				Optional:    true,
 			},
 			"group": {
 				Description: "Group (GID) of file.",
 				Type:        schema.TypeString,
-				ForceNew:    false,
 				Optional:    true,
 			},
 			"owner": {
 				Description: "Owner (UID) of file.",
 				Type:        schema.TypeString,
-				ForceNew:    false,
 				Optional:    true,
 			},
 		},
