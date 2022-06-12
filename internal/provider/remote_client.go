@@ -14,7 +14,14 @@ type RemoteClient struct {
 	sshClient *ssh.Client
 }
 
-func (c *RemoteClient) WriteFile(content string, path string, permissions string) error {
+func (c *RemoteClient) WriteFile(content string, path string, permissions string, sudo bool) error {
+	if sudo {
+		return c.WriteFileShell(content, path)
+	}
+	return c.WriteFileSCP(content, path, permissions)
+}
+
+func (c *RemoteClient) WriteFileSCP(content string, path string, permissions string) error {
 	scpClient, err := c.GetSCPClient()
 	if err != nil {
 		return err
@@ -24,7 +31,7 @@ func (c *RemoteClient) WriteFile(content string, path string, permissions string
 	return scpClient.CopyFile(strings.NewReader(content), path, permissions)
 }
 
-func (c *RemoteClient) WriteFileSudo(content string, path string) error {
+func (c *RemoteClient) WriteFileShell(content string, path string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -96,7 +103,7 @@ func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
 	return session.Run(cmd)
 }
 
-func (c *RemoteClient) FileExistsSudo(path string) (bool, error) {
+func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -106,6 +113,9 @@ func (c *RemoteClient) FileExistsSudo(path string) (bool, error) {
 	defer session.Close()
 
 	cmd := fmt.Sprintf("test -f %s", path)
+	if sudo {
+		cmd = fmt.Sprintf("sudo %s", cmd)
+	}
 	err = session.Run(cmd)
 
 	if err != nil {
@@ -116,13 +126,23 @@ func (c *RemoteClient) FileExistsSudo(path string) (bool, error) {
 		defer session2.Close()
 
 		cmd := fmt.Sprintf("test ! -f %s", path)
+		if sudo {
+			cmd = fmt.Sprintf("sudo %s", cmd)
+		}
 		return false, session2.Run(cmd)
 	}
 
 	return true, nil
 }
 
-func (c *RemoteClient) ReadFile(path string) (string, error) {
+func (c *RemoteClient) ReadFile(path string, sudo bool) (string, error) {
+	if sudo {
+		return c.ReadFileShell(path)
+	}
+	return c.ReadFileSFTP(path)
+}
+
+func (c *RemoteClient) ReadFileSFTP(path string) (string, error) {
 	sftpClient, err := c.GetSFTPClient()
 	if err != nil {
 		return "", err
@@ -144,7 +164,7 @@ func (c *RemoteClient) ReadFile(path string) (string, error) {
 	return content.String(), nil
 }
 
-func (c *RemoteClient) ReadFileSudo(path string) (string, error) {
+func (c *RemoteClient) ReadFileShell(path string) (string, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
