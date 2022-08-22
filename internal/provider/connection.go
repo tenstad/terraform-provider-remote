@@ -1,10 +1,12 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"golang.org/x/crypto/ssh"
@@ -65,11 +67,16 @@ var connectionSchemaResource = &schema.Resource{
 			Default:     false,
 			Description: "Use a local SSH agent to login to the remote host.",
 		},
-
+		"timeout": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			ForceNew:    true,
+			Description: "The maximum amount of time, in milliseconds, for the TCP connection to establish. Timeout of zero means no timeout.",
+		},
 	},
 }
 
-func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConfig, error) {
+func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (string, *ssh.ClientConfig, error) {
 	_, ok := d.GetOk("conn")
 	if !ok {
 		return "", nil, fmt.Errorf("resouce does not have a connection configured")
@@ -124,6 +131,11 @@ func ConnectionFromResourceData(d *schema.ResourceData) (string, *ssh.ClientConf
 			return "", nil, fmt.Errorf("couldn't connect to SSH agent: %s", err.Error())
 		}
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(connection).Signers))
+	}
+
+	timeout, ok := d.GetOk("conn.0.timeout")
+	if ok {
+		clientConfig.Timeout = time.Duration(timeout.(int)) * time.Millisecond
 	}
 
 	host := fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int))

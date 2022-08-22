@@ -59,7 +59,7 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	setResourceID(d, conn)
 
-	client, err := meta.(*apiClient).getRemoteClient(conn)
+	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}

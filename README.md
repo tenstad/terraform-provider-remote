@@ -36,6 +36,8 @@ In `playground/`:
 
 - `make install` to compile and install the provider in the playground
 - `make hosts` to start containers to use as remote hosts
+- Optionally use `export TF_LOG=INFO` and
+  `tflog.Info(ctx, "message from provider")` to log from the provider.
 - Evaluate your changes my modifying `main.tf`  
   and running `terraform plan` or `terraform apply`
 - `docker exec -it remotehost sh` to enter remote host  

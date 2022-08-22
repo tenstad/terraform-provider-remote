@@ -91,7 +91,7 @@ func (c *apiClient) getConnWithDefault(d *schema.ResourceData) (*schema.Resource
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	
+
 	_, ok = c.resourceData.GetOk("conn")
 	if ok {
 		return c.resourceData, nil
@@ -100,7 +100,7 @@ func (c *apiClient) getConnWithDefault(d *schema.ResourceData) (*schema.Resource
 	return nil, errors.New("neither the provider nor the resource/data source have a configured connection")
 }
 
-func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, error) {
+func (c *apiClient) getRemoteClient(ctx context.Context, d *schema.ResourceData) (*RemoteClient, error) {
 	connectionID := resourceConnectionHash(d)
 	defer c.mux.Unlock()
 	for {
@@ -117,7 +117,7 @@ func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, erro
 			return client, nil
 		}
 
-		client, err := remoteClientFromResourceData(d)
+		client, err := remoteClientFromResourceData(ctx, d)
 		if err != nil {
 			return nil, err
 		}
@@ -128,8 +128,8 @@ func (c *apiClient) getRemoteClient(d *schema.ResourceData) (*RemoteClient, erro
 	}
 }
 
-func remoteClientFromResourceData(d *schema.ResourceData) (*RemoteClient, error) {
-	host, clientConfig, err := ConnectionFromResourceData(d)
+func remoteClientFromResourceData(ctx context.Context, d *schema.ResourceData) (*RemoteClient, error) {
+	host, clientConfig, err := ConnectionFromResourceData(ctx, d)
 	if err != nil {
 		return nil, err
 	}

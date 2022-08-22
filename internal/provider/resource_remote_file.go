@@ -64,7 +64,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	setResourceID(d, conn)
 
-	client, err := meta.(*apiClient).getRemoteClient(conn)
+	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
@@ -117,7 +117,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	setResourceID(d, conn)
 
-	client, err := meta.(*apiClient).getRemoteClient(conn)
+	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
@@ -182,7 +182,7 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
-	client, err := meta.(*apiClient).getRemoteClient(conn)
+	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}

@@ -21,6 +21,7 @@ func TestAccResourceRemoteFile(t *testing.T) {
 						user = "root"
 						sudo = true
 						password = "password"
+						timeout = 1000
 					}
 					path = "/tmp/resource_1.txt"
 					content = "resource_1"
