@@ -18,7 +18,7 @@ clean:
 # Run acceptance tests
 test: hosts
 	$(CONTAINER_RUNTIME) run --rm --net remote -v ~/go:/go:z -v $(PWD):/provider:z --workdir /provider \
-	-e "TF_ACC=1" -e "TF_ACC_TERRAFORM_VERSION=1.0.11" -e "TESTARGS=$(TESTARGS)" \
+	-e "TF_LOG=INFO" -e "TF_ACC=1" -e "TF_ACC_TERRAFORM_VERSION=1.0.11" -e "TESTARGS=$(TESTARGS)" \
 	golang:1.16 bash tests/test.sh
 
 # Install provider in playground
@@ -29,3 +29,6 @@ BIN_PATH=$(INSTALL_DIR)/$(PROVIDER_PATH)/terraform-provider-remote_v99.0.0
 install:
 	mkdir -p $(INSTALL_DIR)/$(PROVIDER_PATH)
 	go build -ldflags="-s -w -X main.version=99.0.0" -o $(BIN_PATH)
+
+doc:
+	go generate
