@@ -28,6 +28,11 @@ var connectionSchemaResource = &schema.Resource{
 			ForceNew:    true,
 			Description: "The ssh port on the remote host.",
 		},
+		"timeout": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "The maximum amount of time, in milliseconds, for the TCP connection to establish. Timeout of zero means no timeout.",
+		},
 		"user": {
 			Type:        schema.TypeString,
 			Required:    true,
@@ -38,6 +43,12 @@ var connectionSchemaResource = &schema.Resource{
 			Optional:    true,
 			Default:     false,
 			Description: "Use sudo to gain access to file.",
+		},
+		"agent": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Use a local SSH agent to login to the remote host.",
 		},
 		"password": {
 			Type:        schema.TypeString,
@@ -60,18 +71,6 @@ var connectionSchemaResource = &schema.Resource{
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "The name of the local environment variable containing the private key used to login to the remote host.",
-		},
-		"agent": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "Use a local SSH agent to login to the remote host.",
-		},
-		"timeout": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			ForceNew:    true,
-			Description: "The maximum amount of time, in milliseconds, for the TCP connection to establish. Timeout of zero means no timeout.",
 		},
 	},
 }
