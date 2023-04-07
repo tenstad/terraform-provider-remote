@@ -1,15 +1,8 @@
-# This GitHub action can publish assets for release when a tag is created.
-# Currently its setup to run on any tag that matches the pattern "v*" (ie. v0.1.0).
-#
-# This uses an action (hashicorp/ghaction-import-gpg) that assumes you set your 
-# private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
-# secret. If you would rather own your own GPG handling, please fork this action
-# or use an alternative one for key handling.
-#
-# You will need to pass the `--batch` flag to `gpg` in your signing step 
-# in `goreleaser` to indicate this is being used in a non-interactive mode.
-#
+# Terraform Provider release workflow.
 name: Release
+
+# This GitHub action creates a release when a tag that matches the pattern
+# "v*" (e.g. v0.1.0) is created.
 on:
   push:
     tags:
@@ -20,14 +13,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.5.0
-
-      - name: Unshallow
-        run: git fetch --prune --unshallow
+        with:
+          # Allow goreleaser to access older tag information.
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.16
+          go-version-file: go.mod
 
       - name: Import GPG key
         id: import_gpg
@@ -40,9 +33,8 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3.2.0
         with:
-          version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           # GitHub sets this automatically
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}

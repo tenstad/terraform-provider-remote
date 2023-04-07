@@ -23,8 +23,8 @@ generated (`go generate`), and that go modules are tidy (`go mod tidy`).
 If you wish to work on the provider, you'll first need Go installed on your
 machine. You might also want Terraform and Docker, depending on the work.
 
-- [Go](https://golang.org/doc/install) >= 1.16
-- [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
+- [Go](https://golang.org/doc/install) >= 1.19
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.0
 - [Docker](https://www.docker.com/get-started) (for test purposes)
 
 ### Development Workflow
