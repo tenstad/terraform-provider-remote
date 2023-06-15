@@ -35,7 +35,7 @@ func TestAccDataSourceRemoteFile(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"data.remote_file.data_1", "permissions", regexp.MustCompile("0644")),
 					resource.TestMatchResourceAttr(
-						"data.remote_file.data_1", "owner", regexp.MustCompile("1001")),
+						"data.remote_file.data_1", "owner", regexp.MustCompile("1000")),
 					resource.TestMatchResourceAttr(
 						"data.remote_file.data_1", "group", regexp.MustCompile("0")),
 					resource.TestMatchResourceAttr(
