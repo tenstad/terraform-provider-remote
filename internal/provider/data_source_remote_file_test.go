@@ -12,7 +12,7 @@ func TestAccDataSourceRemoteFile(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			writeFileToHost("remotehost:22", "/tmp/data_1.txt", "data_1")
+			writeFileToHost("remotehost:22", "/tmp/data_1.txt", "data_1", "root", "bob")
 		},
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
@@ -35,9 +35,13 @@ func TestAccDataSourceRemoteFile(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"data.remote_file.data_1", "permissions", regexp.MustCompile("0644")),
 					resource.TestMatchResourceAttr(
-						"data.remote_file.data_1", "owner", regexp.MustCompile("0")),
+						"data.remote_file.data_1", "owner", regexp.MustCompile("1001")),
 					resource.TestMatchResourceAttr(
 						"data.remote_file.data_1", "group", regexp.MustCompile("0")),
+					resource.TestMatchResourceAttr(
+						"data.remote_file.data_1", "owner_name", regexp.MustCompile("bob")),
+					resource.TestMatchResourceAttr(
+						"data.remote_file.data_1", "group_name", regexp.MustCompile("root")),
 				),
 			},
 		},
@@ -48,7 +52,7 @@ func TestAccDataSourceRemoteFileOverridingDefaultConnection(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			writeFileToHost("remotehost2:22", "/tmp/data_2.txt", "data_2")
+			writeFileToHost("remotehost2:22", "/tmp/data_2.txt", "data_2", "root", "root")
 		},
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
@@ -81,7 +85,7 @@ func TestAccDataSourceRemoteFilePrivateKey(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			writeFileToHost("remotehost:22", "/tmp/data_3.txt", "data_3")
+			writeFileToHost("remotehost:22", "/tmp/data_3.txt", "data_3", "root", "root")
 		},
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
@@ -152,7 +156,7 @@ func TestAccDataSourceRemoteFilePrivateKeyPath(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			writeFileToHost("remotehost:22", "/tmp/data_4.txt", "data_4")
+			writeFileToHost("remotehost:22", "/tmp/data_4.txt", "data_4", "root", "root")
 		},
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{

@@ -115,6 +115,10 @@ func TestAccResourceRemoteFileOwnership(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
+						"remote_file.resource_4", "owner_name", regexp.MustCompile("")),
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_4", "group_name", regexp.MustCompile("")),
+					resource.TestMatchResourceAttr(
 						"remote_file.resource_4", "owner", regexp.MustCompile("1000")),
 					resource.TestMatchResourceAttr(
 						"remote_file.resource_4", "group", regexp.MustCompile("1001")),
@@ -141,9 +145,49 @@ func TestAccResourceRemoteFileOwnershipWithDefaultConnection(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
+						"remote_file.resource_5", "owner_name", regexp.MustCompile("")),
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_5", "group_name", regexp.MustCompile("")),
+					resource.TestMatchResourceAttr(
 						"remote_file.resource_5", "owner", regexp.MustCompile("1000")),
 					resource.TestMatchResourceAttr(
 						"remote_file.resource_5", "group", regexp.MustCompile("1001")),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceRemoteFileOwnershipNames(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				resource "remote_file" "resource_6" {
+					conn {
+						host = "remotehost"
+						user = "root"
+						sudo = true
+						password = "password"
+					}
+					path = "/tmp/resource_6.txt"
+					content = "resource_6"
+					permissions = "0777"
+					owner_name = "root"
+					group_name = "root"
+				}
+				`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_6", "owner_name", regexp.MustCompile("root")),
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_6", "group_name", regexp.MustCompile("root")),
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_6", "owner", regexp.MustCompile("")),
+					resource.TestMatchResourceAttr(
+						"remote_file.resource_6", "group", regexp.MustCompile("")),
 				),
 			},
 		},

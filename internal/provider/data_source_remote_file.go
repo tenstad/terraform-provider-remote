@@ -38,12 +38,22 @@ func dataSourceRemoteFile() *schema.Resource {
 				Computed:    true,
 			},
 			"group": {
-				Description: "Group (GID) of file.",
+				Description: "Group ID (GID) of file owner.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"group_name": {
+				Description: "Group name of file owner.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"owner": {
-				Description: "Owner (UID) of file.",
+				Description: "User ID (UID) of file owner.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"owner_name": {
+				Description: "User name of file owner.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -94,11 +104,23 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	d.Set("owner", owner)
 
+	owner_name, err := client.ReadFileOwnerName(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to read remote file owner_name: %s", err.Error())
+	}
+	d.Set("owner_name", owner_name)
+
 	group, err := client.ReadFileGroup(path, sudo)
 	if err != nil {
 		return diag.Errorf("unable to read remote file group: %s", err.Error())
 	}
 	d.Set("group", group)
+
+	group_name, err := client.ReadFileGroupName(path, sudo)
+	if err != nil {
+		return diag.Errorf("unable to read remote file group_name: %s", err.Error())
+	}
+	d.Set("group_name", group_name)
 
 	err = meta.(*apiClient).closeRemoteClient(conn)
 	if err != nil {

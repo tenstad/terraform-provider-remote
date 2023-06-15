@@ -51,9 +51,11 @@ data "remote_file" "server2_hosts" {
 ### Read-Only
 
 - `content` (String) Content of file.
-- `group` (String) Group (GID) of file.
+- `group` (String) Group ID (GID) of file owner.
+- `group_name` (String) Group name of file owner.
 - `id` (String) The ID of this resource.
-- `owner` (String) Owner (UID) of file.
+- `owner` (String) User ID (UID) of file owner.
+- `owner_name` (String) User name of file owner.
 - `permissions` (String) Permissions of file (in octal form).
 
 <a id="nestedblock--conn"></a>
