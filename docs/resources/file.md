@@ -32,6 +32,8 @@ resource "remote_file" "server1_bashrc" {
   path        = "/home/john/.bashrc"
   content     = "alias ll='ls -alF'"
   permissions = "0644"
+  owner       = "0"
+  group       = "0"
 }
 
 resource "remote_file" "server2_bashrc" {
@@ -40,6 +42,8 @@ resource "remote_file" "server2_bashrc" {
   path        = "/home/john/.bashrc"
   content     = "alias ll='ls -alF'"
   permissions = "0644"
+  owner_name  = "john"
+  group_name  = "john"
 }
 ```
 
@@ -54,8 +58,10 @@ resource "remote_file" "server2_bashrc" {
 ### Optional
 
 - `conn` (Block List, Max: 1) Connection to host where files are located. (see [below for nested schema](#nestedblock--conn))
-- `group` (String) Group (GID) of file.
-- `owner` (String) Owner (UID) of file.
+- `group` (String) Group ID (GID) of file owner. Mutually exclusive with `group_name`.
+- `group_name` (String) Group name of file owner. Mutually exclusive with `group`.
+- `owner` (String) User ID (UID) of file owner. Mutually exclusive with `owner_name`.
+- `owner_name` (String) User name of file owner. Mutually exclusive with `owner`.
 - `permissions` (String) Permissions of file (in octal form). Defaults to `0644`.
 
 ### Read-Only

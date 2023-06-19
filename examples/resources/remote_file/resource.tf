@@ -17,6 +17,8 @@ resource "remote_file" "server1_bashrc" {
   path        = "/home/john/.bashrc"
   content     = "alias ll='ls -alF'"
   permissions = "0644"
+  owner       = "0"
+  group       = "0"
 }
 
 resource "remote_file" "server2_bashrc" {
@@ -25,4 +27,6 @@ resource "remote_file" "server2_bashrc" {
   path        = "/home/john/.bashrc"
   content     = "alias ll='ls -alF'"
   permissions = "0644"
+  owner_name  = "john"
+  group_name  = "john"
 }

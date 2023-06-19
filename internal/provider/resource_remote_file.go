@@ -43,14 +43,26 @@ func resourceRemoteFile() *schema.Resource {
 				Optional:    true,
 			},
 			"group": {
-				Description: "Group (GID) of file.",
+				Description: "Group ID (GID) of file owner. Mutually exclusive with `group_name`.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"group_name": {
+				Description:   "Group name of file owner. Mutually exclusive with `group`.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"group"},
+			},
 			"owner": {
-				Description: "Owner (UID) of file.",
+				Description: "User ID (UID) of file owner. Mutually exclusive with `owner_name`.",
 				Type:        schema.TypeString,
 				Optional:    true,
+			},
+			"owner_name": {
+				Description:   "User name of file owner. Mutually exclusive with `owner`.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"owner"},
 			},
 		},
 	}
@@ -76,6 +88,12 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	permissions := d.Get("permissions").(string)
 	group := d.Get("group").(string)
 	owner := d.Get("owner").(string)
+	if group == "" {
+		group = d.Get("group_name").(string)
+	}
+	if owner == "" {
+		owner = d.Get("owner_name").(string)
+	}
 
 	err = client.WriteFile(content, path, permissions, sudo)
 	if err != nil {
@@ -127,6 +145,8 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 	path := d.Get("path").(string)
 	group := d.Get("group").(string)
 	owner := d.Get("owner").(string)
+	group_name := d.Get("group_name").(string)
+	owner_name := d.Get("owner_name").(string)
 
 	exists, err := client.FileExists(path, sudo)
 	if err != nil {
@@ -152,6 +172,13 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 			}
 			d.Set("owner", owner)
 		}
+		if owner_name != "" {
+			owner_name, err := client.ReadFileOwnerName(path, sudo)
+			if err != nil {
+				return diag.Errorf("unable to read remote file owner_name: %s", err.Error())
+			}
+			d.Set("owner_name", owner_name)
+		}
 
 		if group != "" {
 			group, err := client.ReadFileGroup(path, sudo)
@@ -159,6 +186,13 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("unable to read remote file group: %s", err.Error())
 			}
 			d.Set("group", group)
+		}
+		if group_name != "" {
+			group_name, err := client.ReadFileGroupName(path, sudo)
+			if err != nil {
+				return diag.Errorf("unable to read remote file group_name: %s", err.Error())
+			}
+			d.Set("group_name", group_name)
 		}
 	} else {
 		d.SetId("")

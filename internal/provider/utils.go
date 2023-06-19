@@ -6,7 +6,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func writeFileToHost(host string, filename string, content string) {
+func writeFileToHost(host string, filename string, content string, group string, user string) {
 	sshClient, err := ssh.Dial("tcp", host, &ssh.ClientConfig{
 		User:            "root",
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
@@ -31,5 +31,5 @@ func writeFileToHost(host string, filename string, content string) {
 		stdin.Write([]byte(content))
 		stdin.Close()
 	}()
-	session.Run(fmt.Sprintf("cat /dev/stdin | tee %s", filename))
+	session.Run(fmt.Sprintf("cat /dev/stdin | tee %s && chgrp %s %s && chown %s %s", filename, group, filename, user, filename))
 }
