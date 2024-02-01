@@ -89,6 +89,17 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 	password, ok := d.GetOk("conn.0.password")
 	if ok {
 		clientConfig.Auth = append(clientConfig.Auth, ssh.Password(password.(string)))
+
+		// An implementation of ssh.KeyboardInteractiveChallenge that simply sends back the password for all questions.
+		cb := func(user, instruction string, questions []string, echos []bool) ([]string, error) {
+			answers := make([]string, len(questions))
+			for i := range answers {
+				answers[i] = password.(string)
+			}
+
+			return answers, nil
+		}
+		clientConfig.Auth = append(clientConfig.Auth, ssh.KeyboardInteractive(cb))
 	}
 
 	private_key, ok := d.GetOk("conn.0.private_key")
