@@ -2,6 +2,7 @@ package provider
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 
@@ -40,21 +41,21 @@ type RemoteClient struct {
 	sshClient *ssh.Client
 }
 
-func (c *RemoteClient) WriteFile(content string, path string, permissions string, sudo bool) error {
+func (c *RemoteClient) WriteFile(ctx context.Context, content string, path string, permissions string, sudo bool) error {
 	if sudo {
 		return c.WriteFileShell(content, path)
 	}
-	return c.WriteFileSCP(content, path, permissions)
+	return c.WriteFileSCP(ctx, content, path, permissions)
 }
 
-func (c *RemoteClient) WriteFileSCP(content string, path string, permissions string) error {
+func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path string, permissions string) error {
 	scpClient, err := c.GetSCPClient()
 	if err != nil {
 		return err
 	}
 	defer scpClient.Close()
 
-	return scpClient.CopyFile(strings.NewReader(content), path, permissions)
+	return scpClient.CopyFile(ctx, strings.NewReader(content), path, permissions)
 }
 
 func (c *RemoteClient) WriteFileShell(content string, path string) error {
