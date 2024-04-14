@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"time"
@@ -76,8 +75,7 @@ var connectionSchemaResource = &schema.Resource{
 }
 
 func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (string, *ssh.ClientConfig, error) {
-	_, ok := d.GetOk("conn")
-	if !ok {
+	if _, ok := d.GetOk("conn"); !ok {
 		return "", nil, fmt.Errorf("resouce does not have a connection configured")
 	}
 
@@ -102,7 +100,7 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 
 	private_key_path, ok := d.GetOk("conn.0.private_key_path")
 	if ok {
-		content, err := ioutil.ReadFile(private_key_path.(string))
+		content, err := os.ReadFile(private_key_path.(string))
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't read private key: %s", err.Error())
 		}
