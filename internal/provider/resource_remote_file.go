@@ -95,7 +95,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		owner = d.Get("owner_name").(string)
 	}
 
-	err = client.WriteFile(content, path, permissions, sudo)
+	err = client.WriteFile(ctx, content, path, permissions, sudo)
 	if err != nil {
 		return diag.Errorf("unable to create remote file: %s", err.Error())
 	}
