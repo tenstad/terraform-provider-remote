@@ -304,7 +304,7 @@ func (c *RemoteClient) DeleteFileShell(path string) error {
 func NewRemoteClient(host string, clientConfig *ssh.ClientConfig) (*RemoteClient, error) {
 	client, err := ssh.Dial("tcp", host, clientConfig)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't establish a connection to the remote server: %s", err.Error())
+		return nil, fmt.Errorf("couldn't establish a connection to the remote server '%s@%s': %s", clientConfig.User, host, err.Error())
 	}
 
 	return &RemoteClient{
