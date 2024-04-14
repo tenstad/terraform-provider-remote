@@ -19,7 +19,7 @@ clean:
 test: hosts
 	$(CONTAINER_RUNTIME) run --rm --net remote -v ~/go:/go:z -v $(PWD):/provider:z --workdir /provider \
 	-e "TF_LOG=INFO" -e "TF_ACC=1" -e "TF_ACC_TERRAFORM_VERSION=1.0.11" -e "TESTARGS=$(TESTARGS)" \
-	golang:1.16 bash tests/test.sh
+	golang:1.22 bash tests/test.sh
 
 # Install provider in playground
 INSTALL_DIR=playground
