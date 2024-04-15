@@ -6,7 +6,7 @@ require (
 	github.com/bramvdbogaerde/go-scp v1.4.0
 	github.com/hashicorp/terraform-plugin-docs v0.18.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
-	github.com/pkg/sftp v1.13.5
+	github.com/pkg/sftp v1.13.6
 	golang.org/x/crypto v0.22.0
 )
 
