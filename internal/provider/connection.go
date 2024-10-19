@@ -79,28 +79,52 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 		return "", nil, fmt.Errorf("resouce does not have a connection configured")
 	}
 
+	host, err := Get[string](d, "conn.0.host")
+	if err != nil {
+		return "", nil, err
+	}
+
+	port, err := Get[int](d, "conn.0.port")
+	if err != nil {
+		return "", nil, err
+	}
+
+	user, err := Get[string](d, "conn.0.user")
+	if err != nil {
+		return "", nil, err
+	}
+
 	clientConfig := ssh.ClientConfig{
-		User:            d.Get("conn.0.user").(string),
+		User:            user,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	password, ok := d.GetOk("conn.0.password")
-	if ok {
-		clientConfig.Auth = append(clientConfig.Auth, ssh.Password(password.(string)))
+	if password, ok, err := GetOk[string](d, "conn.0.password"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		clientConfig.Auth = append(clientConfig.Auth, ssh.Password(password))
 	}
 
-	private_key, ok := d.GetOk("conn.0.private_key")
-	if ok {
-		signer, err := ssh.ParsePrivateKey([]byte(private_key.(string)))
+	if privateKey, ok, err := GetOk[string](d, "conn.0.private_key"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		signer, err := ssh.ParsePrivateKey([]byte(privateKey))
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't create a ssh client config from private key: %s", err.Error())
 		}
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	private_key_path, ok := d.GetOk("conn.0.private_key_path")
-	if ok {
-		content, err := os.ReadFile(private_key_path.(string))
+	if privateKeyPath, ok, err := GetOk[string](d, "conn.0.private_key_path"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		content, err := os.ReadFile(privateKeyPath)
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't read private key: %s", err.Error())
 		}
@@ -111,18 +135,25 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	private_key_env_var, ok := d.GetOk("conn.0.private_key_env_var")
-	if ok {
-		private_key := os.Getenv(private_key_env_var.(string))
-		signer, err := ssh.ParsePrivateKey([]byte(private_key))
+	if privateKeyEnvVar, ok, err := GetOk[string](d, "conn.0.private_key_env_var"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		content := []byte(os.Getenv(privateKeyEnvVar))
+		signer, err := ssh.ParsePrivateKey(content)
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't create a ssh client config from private key env var: %s", err.Error())
 		}
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
 	}
 
-	enableAgent, ok := d.GetOk("conn.0.agent")
-	if ok && enableAgent.(bool) {
+	// Don't check ok as terraform struggles with zero values.
+	if enableAgent, _, err := GetOk[bool](d, "conn.0.agent"); enableAgent {
+		if err != nil {
+			return "", nil, err
+		}
+
 		connection, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't connect to SSH agent: %s", err.Error())
@@ -130,11 +161,13 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 		clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(connection).Signers))
 	}
 
-	timeout, ok := d.GetOk("conn.0.timeout")
-	if ok {
-		clientConfig.Timeout = time.Duration(timeout.(int)) * time.Millisecond
+	if timeout, ok, err := GetOk[int](d, "conn.0.timeout"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		clientConfig.Timeout = time.Duration(timeout) * time.Millisecond
 	}
 
-	host := fmt.Sprintf("%s:%d", d.Get("conn.0.host").(string), d.Get("conn.0.port").(int))
-	return host, &clientConfig, nil
+	return fmt.Sprintf("%s:%d", host, port), &clientConfig, nil
 }
