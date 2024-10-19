@@ -30,7 +30,7 @@ machine. You might also want Terraform and Docker, depending on the work.
 ### Development Workflow
 
 The playground enables developers to play around with changes and new features
-without releasing a new version of the provider. 
+without releasing a new version of the provider.
 
 In `playground/`:
 
@@ -48,5 +48,5 @@ When changes are working as intended:
 
 - Create/modify acceptance tests
 - `make test` to run acceptance test  
-  NOTE: Docker is required, tests are performed between containers
+  NOTE: A container runtime is required, tests are performed between containers.
 - `go generate` to generate documentation
