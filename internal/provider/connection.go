@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sshcfg "github.com/kevinburke/ssh_config"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
@@ -20,6 +22,22 @@ var connectionSchemaResource = &schema.Resource{
 			ForceNew:    true,
 			Description: "The remote host.",
 		},
+		"ssh_config": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Description: "SSH config file." +
+				" Will use 'host' field as alias. Supported fields: 'User', 'Port', and 'IdentityFile'.",
+			Sensitive:     true,
+			ConflictsWith: []string{"conn.0.ssh_config_path"},
+			ComputedWhen: ,
+		},
+		"ssh_config_path": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Description: "Path to a SSH config file." +
+				" Will use 'host' field as alias. Supported fields: 'User', 'Port', and 'IdentityFile'.",
+			ConflictsWith: []string{"conn.0.ssh_config"},
+		},
 		"port": {
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -28,13 +46,14 @@ var connectionSchemaResource = &schema.Resource{
 			Description: "The ssh port on the remote host.",
 		},
 		"timeout": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The maximum amount of time, in milliseconds, for the TCP connection to establish. Timeout of zero means no timeout.",
+			Type:     schema.TypeInt,
+			Optional: true,
+			Description: "The maximum amount of time, in milliseconds," +
+				" for the TCP connection to establish. Timeout of zero means no timeout.",
 		},
 		"user": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Optional:    true,
 			Description: "The user on the remote host.",
 		},
 		"sudo": {
@@ -67,9 +86,10 @@ var connectionSchemaResource = &schema.Resource{
 			Description: "The local path to the private key used to login to the remote host.",
 		},
 		"private_key_env_var": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "The name of the local environment variable containing the private key used to login to the remote host.",
+			Type:     schema.TypeString,
+			Optional: true,
+			Description: "The name of the local environment variable" +
+				" containing the private key used to login to the remote host.",
 		},
 	},
 }
@@ -77,6 +97,10 @@ var connectionSchemaResource = &schema.Resource{
 func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (string, *ssh.ClientConfig, error) {
 	if _, ok := d.GetOk("conn"); !ok {
 		return "", nil, fmt.Errorf("resouce does not have a connection configured")
+	}
+
+	clientConfig := ssh.ClientConfig{
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
 	host, err := Get[string](d, "conn.0.host")
@@ -89,14 +113,64 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 		return "", nil, err
 	}
 
-	user, err := Get[string](d, "conn.0.user")
-	if err != nil {
-		return "", nil, err
+	if user, ok, err := GetOk[string](d, "conn.0.user"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+		clientConfig.User = user
 	}
 
-	clientConfig := ssh.ClientConfig{
-		User:            user,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	var sshCfg *sshcfg.Config
+	if sshConfig, ok, err := GetOk[string](d, "conn.0.ssh_config"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		sshCfg, err = sshcfg.DecodeBytes([]byte(sshConfig))
+		if err != nil {
+			return "", nil, err
+		}
+	} else if sshConfigPath, ok, err := GetOk[string](d, "conn.0.ssh_config_path"); ok {
+		if err != nil {
+			return "", nil, err
+		}
+
+		file, err := os.Open(sshConfigPath)
+		if err != nil {
+			return "", nil, err
+		}
+
+		sshCfg, err = sshcfg.Decode(file)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+	if sshCfg != nil {
+		if user, err := sshCfg.Get(host, "User"); err != nil {
+			clientConfig.User = user
+		}
+
+		if p, err := sshCfg.Get(host, "Port"); err != nil {
+			p, err := strconv.Atoi(p)
+			if err != nil {
+				return "", nil, err
+			}
+			port = p
+		}
+
+		if identityFiles, err := sshCfg.GetAll(host, "IdentityFile"); err != nil {
+			for _, identityFile := range identityFiles {
+				content, err := os.ReadFile(identityFile)
+				if err != nil {
+					return "", nil, fmt.Errorf("couldn't read private key from ssh config: %s", err.Error())
+				}
+				signer, err := ssh.ParsePrivateKey(content)
+				if err != nil {
+					return "", nil, fmt.Errorf("couldn't create a ssh client config from private key file in ssh config: %s", err.Error())
+				}
+				clientConfig.Auth = append(clientConfig.Auth, ssh.PublicKeys(signer))
+			}
+		}
 	}
 
 	if password, ok, err := GetOk[string](d, "conn.0.password"); ok {

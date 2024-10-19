@@ -190,7 +190,17 @@ func resourceConnectionHash(d *schema.ResourceData) (string, error) {
 		return "", err
 	}
 
-	user, err := Get[string](d, "conn.0.user")
+	ssh_config, _, err := GetOk[string](d, "conn.0.ssh_config")
+	if err != nil {
+		return "", err
+	}
+
+	ssh_config_path, _, err := GetOk[string](d, "conn.0.ssh_config_path")
+	if err != nil {
+		return "", err
+	}
+
+	user, _, err := GetOk[string](d, "conn.0.user")
 	if err != nil {
 		return "", err
 	}
@@ -226,6 +236,8 @@ func resourceConnectionHash(d *schema.ResourceData) (string, error) {
 
 	elements := []string{
 		host,
+		ssh_config,
+		ssh_config_path,
 		user,
 		strconv.Itoa(port),
 		password,
