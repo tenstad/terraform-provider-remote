@@ -25,9 +25,8 @@ func (e Error) Error() string {
 func run(s *ssh.Session, cmd string) error {
 	var b bytes.Buffer
 	s.Stderr = &b
-	err := s.Run(cmd)
 
-	if err != nil {
+	if err := s.Run(cmd); err != nil {
 		return Error{
 			cmd:    cmd,
 			err:    err,
@@ -143,9 +142,8 @@ func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
-	err = run(session, cmd)
 
-	if err != nil {
+	if err := run(session, cmd); err != nil {
 		session2, err := sshClient.NewSession()
 		if err != nil {
 			return false, err
@@ -183,8 +181,7 @@ func (c *RemoteClient) ReadFileSFTP(path string) (string, error) {
 	defer file.Close()
 
 	content := bytes.Buffer{}
-	_, err = file.WriteTo(&content)
-	if err != nil {
+	if _, err := file.WriteTo(&content); err != nil {
 		return "", err
 	}
 
