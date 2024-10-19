@@ -84,16 +84,14 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 }
 
 func (c *apiClient) getConnWithDefault(d *schema.ResourceData) (*schema.ResourceData, error) {
-	_, ok := d.GetOk("conn")
-	if ok {
+	if _, ok := d.GetOk("conn"); ok {
 		return d, nil
 	}
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	_, ok = c.resourceData.GetOk("conn")
-	if ok {
+	if _, ok := c.resourceData.GetOk("conn"); ok {
 		return c.resourceData, nil
 	}
 
@@ -110,13 +108,12 @@ func (c *apiClient) getRemoteClient(ctx context.Context, d *schema.ResourceData)
 	for {
 		c.mux.Lock()
 
-		client, ok := c.remoteClients[connectionID]
-		if ok {
+		if client, ok := c.remoteClients[connectionID]; ok {
 			if c.activeSessions[connectionID] >= c.maxSessions {
 				c.mux.Unlock()
 				continue
 			}
-			c.activeSessions[connectionID] += 1
+			c.activeSessions[connectionID]++
 
 			return client, nil
 		}
@@ -149,7 +146,7 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	c.activeSessions[connectionID] -= 1
+	c.activeSessions[connectionID]--
 	if c.activeSessions[connectionID] == 0 {
 		client := c.remoteClients[connectionID]
 		delete(c.remoteClients, connectionID)
