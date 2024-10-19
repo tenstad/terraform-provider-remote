@@ -67,16 +67,25 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
-	setResourceID(d, conn)
+	err = setResourceID(d, conn)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
 
 	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
-	conn_sudo, ok := conn.GetOk("conn.0.sudo")
-	sudo := ok && conn_sudo.(bool)
-	path := d.Get("path").(string)
+	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	path, err := Get[string](d, "path")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
 
 	exists, err := client.FileExists(path, sudo)
 	if err != nil {

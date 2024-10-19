@@ -101,7 +101,11 @@ func (c *apiClient) getConnWithDefault(d *schema.ResourceData) (*schema.Resource
 }
 
 func (c *apiClient) getRemoteClient(ctx context.Context, d *schema.ResourceData) (*RemoteClient, error) {
-	connectionID := resourceConnectionHash(d)
+	connectionID, err := resourceConnectionHash(d)
+	if err != nil {
+		return nil, err
+	}
+
 	defer c.mux.Unlock()
 	for {
 		c.mux.Lock()
@@ -137,7 +141,11 @@ func remoteClientFromResourceData(ctx context.Context, d *schema.ResourceData) (
 }
 
 func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
-	connectionID := resourceConnectionHash(d)
+	connectionID, err := resourceConnectionHash(d)
+	if err != nil {
+		return err
+	}
+
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -151,31 +159,79 @@ func (c *apiClient) closeRemoteClient(d *schema.ResourceData) error {
 	return nil
 }
 
-func setResourceID(d *schema.ResourceData, conn *schema.ResourceData) {
-	id := fmt.Sprintf("%s:%d:%s",
-		conn.Get("conn.0.host").(string),
-		conn.Get("conn.0.port").(int),
-		d.Get("path").(string))
-	d.SetId(id)
+func setResourceID(d *schema.ResourceData, conn *schema.ResourceData) error {
+	host, err := Get[string](conn, "conn.0.host")
+	if err != nil {
+		return err
+	}
+
+	port, err := Get[int](conn, "conn.0.port")
+	if err != nil {
+		return err
+	}
+
+	path, err := Get[string](d, "path")
+	if err != nil {
+		return err
+	}
+
+	d.SetId(fmt.Sprintf("%s:%d:%s",
+		host,
+		port,
+		path,
+	))
+
+	return nil
 }
 
-func resourceConnectionHash(d *schema.ResourceData) string {
+func resourceConnectionHash(d *schema.ResourceData) (string, error) {
+	host, err := Get[string](d, "conn.0.host")
+	if err != nil {
+		return "", err
+	}
+
+	user, err := Get[string](d, "conn.0.user")
+	if err != nil {
+		return "", err
+	}
+
+	port, err := Get[int](d, "conn.0.port")
+	if err != nil {
+		return "", err
+	}
+
+	password, _, err := GetOk[string](d, "conn.0.password")
+	if err != nil {
+		return "", err
+	}
+
+	privateKey, _, err := GetOk[string](d, "conn.0.private_key")
+	if err != nil {
+		return "", err
+	}
+
+	privateKeyPath, _, err := GetOk[string](d, "conn.0.private_key_path")
+	if err != nil {
+		return "", err
+	}
+
+	// Should ideally use Get as it has a default and should always exist.
+	// However GetOk as Terraform returns false for exists when value equals
+	// zero value (which the default for agent does). Could maybe use
+	// GetOkExists, but discouraged.
+	agent, _, err := GetOk[bool](d, "conn.0.agent")
+	if err != nil {
+		return "", err
+	}
+
 	elements := []string{
-		d.Get("conn.0.host").(string),
-		d.Get("conn.0.user").(string),
-		strconv.Itoa(d.Get("conn.0.port").(int)),
-		resourceStringWithDefault(d, "conn.0.password", ""),
-		resourceStringWithDefault(d, "conn.0.private_key", ""),
-		resourceStringWithDefault(d, "conn.0.private_key_path", ""),
-		strconv.FormatBool(d.Get("conn.0.agent").(bool)),
+		host,
+		user,
+		strconv.Itoa(port),
+		password,
+		privateKey,
+		privateKeyPath,
+		strconv.FormatBool(agent),
 	}
-	return strings.Join(elements, "::")
-}
-
-func resourceStringWithDefault(d *schema.ResourceData, key string, defaultValue string) string {
-	str, ok := d.GetOk(key)
-	if ok {
-		return str.(string)
-	}
-	return defaultValue
+	return strings.Join(elements, "::"), nil
 }

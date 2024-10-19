@@ -71,37 +71,70 @@ func resourceRemoteFile() *schema.Resource {
 func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
-		return diag.Errorf(err.Error())
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
 	}
 
-	setResourceID(d, conn)
+	err = setResourceID(d, conn)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
 
 	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
-	conn_sudo, ok := conn.GetOk("conn.0.sudo")
-	sudo := ok && conn_sudo.(bool)
-	content := d.Get("content").(string)
-	path := d.Get("path").(string)
-	permissions := d.Get("permissions").(string)
-	group := d.Get("group").(string)
-	owner := d.Get("owner").(string)
-	if group == "" {
-		group = d.Get("group_name").(string)
-	}
-	if owner == "" {
-		owner = d.Get("owner_name").(string)
+	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
 	}
 
-	err = client.WriteFile(ctx, content, path, permissions, sudo)
+	content, err := Get[string](d, "content")
 	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	path, err := Get[string](d, "path")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	permissions, err := Get[string](d, "permissions")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	var group string
+	if g, ok, err := GetOk[string](d, "group"); ok {
+		if err != nil {
+			return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+		}
+		group = g
+	} else if g, ok, err := GetOk[string](d, "group_name"); ok {
+		if err != nil {
+			return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+		}
+		group = g
+	}
+
+	var owner string
+	if o, ok, err := GetOk[string](d, "owner"); ok {
+		if err != nil {
+			return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+		}
+		owner = o
+	} else if o, ok, err := GetOk[string](d, "owner_name"); ok {
+		if err != nil {
+			return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+		}
+		owner = o
+	}
+
+	if err := client.WriteFile(ctx, content, path, permissions, sudo); err != nil {
 		return diag.Errorf("unable to create remote file: %s", err.Error())
 	}
 
-	err = client.ChmodFile(path, permissions, sudo)
-	if err != nil {
+	if err := client.ChmodFile(path, permissions, sudo); err != nil {
 		return diag.Errorf("unable to change permissions of remote file: %s", err.Error())
 	}
 
@@ -133,20 +166,45 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf(err.Error())
 	}
 
-	setResourceID(d, conn)
+	err = setResourceID(d, conn)
+	if err != nil {
+		return diag.Errorf(err.Error())
+	}
 
 	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
-	conn_sudo, ok := conn.GetOk("conn.0.sudo")
-	sudo := ok && conn_sudo.(bool)
-	path := d.Get("path").(string)
-	group := d.Get("group").(string)
-	owner := d.Get("owner").(string)
-	group_name := d.Get("group_name").(string)
-	owner_name := d.Get("owner_name").(string)
+	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	path, err := Get[string](d, "path")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	_, groupOk, err := GetOk[string](d, "group")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	_, groupNameOk, err := GetOk[string](d, "group_name")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	_, ownerOk, err := GetOk[string](d, "owner")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	_, ownerNameOk, err := GetOk[string](d, "owner_name")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
 
 	exists, err := client.FileExists(path, sudo)
 	if err != nil {
@@ -165,34 +223,34 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		}
 		d.Set("permissions", permissions)
 
-		if owner != "" {
+		if ownerOk {
 			owner, err := client.ReadFileOwner(path, sudo)
 			if err != nil {
 				return diag.Errorf("unable to read remote file owner: %s", err.Error())
 			}
 			d.Set("owner", owner)
 		}
-		if owner_name != "" {
-			owner_name, err := client.ReadFileOwnerName(path, sudo)
+		if ownerNameOk {
+			ownerName, err := client.ReadFileOwnerName(path, sudo)
 			if err != nil {
 				return diag.Errorf("unable to read remote file owner_name: %s", err.Error())
 			}
-			d.Set("owner_name", owner_name)
+			d.Set("owner_name", ownerName)
 		}
 
-		if group != "" {
+		if groupOk {
 			group, err := client.ReadFileGroup(path, sudo)
 			if err != nil {
 				return diag.Errorf("unable to read remote file group: %s", err.Error())
 			}
 			d.Set("group", group)
 		}
-		if group_name != "" {
-			group_name, err := client.ReadFileGroupName(path, sudo)
+		if groupNameOk {
+			groupName, err := client.ReadFileGroupName(path, sudo)
 			if err != nil {
 				return diag.Errorf("unable to read remote file group_name: %s", err.Error())
 			}
-			d.Set("group_name", group_name)
+			d.Set("group_name", groupName)
 		}
 	} else {
 		d.SetId("")
@@ -213,7 +271,7 @@ func resourceRemoteFileUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
-		return diag.Errorf(err.Error())
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
 	}
 
 	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
@@ -221,9 +279,15 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
 
-	conn_sudo, ok := conn.GetOk("conn.0.sudo")
-	sudo := ok && conn_sudo.(bool)
-	path := d.Get("path").(string)
+	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
+
+	path, err := Get[string](d, "path")
+	if err != nil {
+		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
+	}
 
 	exists, err := client.FileExists(path, sudo)
 	if err != nil {
