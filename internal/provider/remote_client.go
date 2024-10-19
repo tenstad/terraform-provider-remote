@@ -23,14 +23,14 @@ func (e Error) Error() string {
 }
 
 func run(s *ssh.Session, cmd string) error {
-	var b bytes.Buffer
-	s.Stderr = &b
+	var buffer bytes.Buffer
+	s.Stderr = &buffer
 
 	if err := s.Run(cmd); err != nil {
 		return Error{
 			cmd:    cmd,
 			err:    err,
-			stderr: b.Bytes(),
+			stderr: buffer.Bytes(),
 		}
 	}
 	return nil
@@ -40,7 +40,9 @@ type RemoteClient struct {
 	sshClient *ssh.Client
 }
 
-func (c *RemoteClient) WriteFile(ctx context.Context, content string, path string, permissions string, sudo bool) error {
+func (c *RemoteClient) WriteFile(
+	ctx context.Context, content string, path string, permissions string, sudo bool,
+) error {
 	if sudo {
 		return c.WriteFileShell(content, path)
 	}
@@ -72,7 +74,7 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 	}
 
 	go func() {
-		stdin.Write([]byte(content))
+		_, _ = stdin.Write([]byte(content))
 		stdin.Close()
 	}()
 
