@@ -67,8 +67,7 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf(err.Error())
 	}
 
-	err = setResourceID(d, conn)
-	if err != nil {
+	if err := setResourceID(d, conn); err != nil {
 		return diag.Errorf(err.Error())
 	}
 
@@ -131,8 +130,7 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	d.Set("group_name", group_name)
 
-	err = meta.(*apiClient).closeRemoteClient(conn)
-	if err != nil {
+	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
 		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 

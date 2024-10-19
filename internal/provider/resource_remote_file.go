@@ -74,8 +74,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
 	}
 
-	err = setResourceID(d, conn)
-	if err != nil {
+	if err := setResourceID(d, conn); err != nil {
 		return diag.Errorf(err.Error())
 	}
 
@@ -139,21 +138,18 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if group != "" {
-		err = client.ChgrpFile(path, group, sudo)
-		if err != nil {
+		if err := client.ChgrpFile(path, group, sudo); err != nil {
 			return diag.Errorf("unable to change group of remote file: %s", err.Error())
 		}
 	}
 
 	if owner != "" {
-		err = client.ChownFile(path, owner, sudo)
-		if err != nil {
+		if err := client.ChownFile(path, owner, sudo); err != nil {
 			return diag.Errorf("unable to change owner of remote file: %s", err.Error())
 		}
 	}
 
-	err = meta.(*apiClient).closeRemoteClient(conn)
-	if err != nil {
+	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
 		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 
@@ -166,8 +162,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf(err.Error())
 	}
 
-	err = setResourceID(d, conn)
-	if err != nil {
+	if err := setResourceID(d, conn); err != nil {
 		return diag.Errorf(err.Error())
 	}
 
@@ -256,8 +251,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		d.SetId("")
 	}
 
-	err = meta.(*apiClient).closeRemoteClient(conn)
-	if err != nil {
+	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
 		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 
@@ -294,14 +288,12 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("unable to check if remote file exists: %s", err.Error())
 	}
 	if exists {
-		err = client.DeleteFile(path, sudo)
-		if err != nil {
+		if err := client.DeleteFile(path, sudo); err != nil {
 			return diag.Errorf("unable to delete remote file: %s", err.Error())
 		}
 	}
 
-	err = meta.(*apiClient).closeRemoteClient(conn)
-	if err != nil {
+	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
 		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 
