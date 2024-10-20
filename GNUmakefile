@@ -9,7 +9,7 @@ CONTAINER_NETWORK ?= $(shell \
 	; fi)
 
 .PHONY: test
-default: test
+default: test doc
 
 # Start host containers used for playground and testing
 hosts: clean
@@ -45,4 +45,4 @@ install:
 	go build -ldflags="-s -w -X main.version=99.0.0" -o $(BIN_PATH)
 
 doc:
-	go generate
+	cd tools && go generate
