@@ -52,7 +52,7 @@ provider "remote" {
 
 ### Optional
 
-- `conn` (Block List, Max: 1) Default connection to host where files are located. Can be overridden in resources and data sources. (see [below for nested schema](#nestedblock--conn))
+- `conn` (Block List) Default connection to host where files are located. Can be overridden in resources and data sources. (see [below for nested schema](#nestedblock--conn))
 - `max_sessions` (Number) Maximum number of open sessions in each host connection. Defaults to `3`.
 
 <a id="nestedblock--conn"></a>
@@ -72,4 +72,4 @@ Optional:
 - `private_key_env_var` (String) The name of the local environment variable containing the private key used to login to the remote host.
 - `private_key_path` (String) The local path to the private key used to login to the remote host.
 - `sudo` (Boolean) Use sudo to gain access to file. Defaults to `false`.
-- `timeout` (Number) The maximum amount of time, in milliseconds, for the TCP connection to establish. Timeout of zero means no timeout.
+- `timeout` (Number) The maximum amount of time, in milliseconds, for the TCP connection to establish. Undefined means no timeout.
