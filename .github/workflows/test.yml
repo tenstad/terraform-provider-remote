@@ -5,12 +5,12 @@ name: Test
 on:
   pull_request:
     paths-ignore:
-      - 'README.md'
+      - README.md
   push:
     paths-ignore:
-      - 'README.md'
+      - README.md
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
-  # we recommend testing at a regular interval not necessarily tied to code changes. This will 
+  # we recommend testing at a regular interval not necessarily tied to code changes. This will
   # ensure you are alerted to something breaking due to an API change, even if the code did not
   # change.
   # schedule:
@@ -93,12 +93,12 @@ jobs:
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '0.12.*'
-          - '0.13.*'
-          - '0.14.*'
-          - '0.15.*'
-          - '1.0.*'
-          - '1.1.*'
+          - 0.12.*
+          - 0.13.*
+          - 0.14.*
+          - 0.15.*
+          - 1.0.*
+          - 1.1.*
     services:
       remotehost:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
@@ -109,7 +109,7 @@ jobs:
     steps:
       - name: Install unzip
         run: apt-get update && apt-get install -y unzip
-      
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ matrix.terraform }}
