@@ -254,6 +254,28 @@ func (c *RemoteClient) ReadFileShell(path string) (string, error) {
 }
 
 func (c *RemoteClient) ReadFilePermissions(path string, sudo bool) (string, error) {
+	if sudo {
+		return c.ReadFilePermissionsShell(path, sudo)
+	}
+	return c.ReadFilePermissionsSFTP(path)
+}
+
+func (c *RemoteClient) ReadFilePermissionsSFTP(path string) (string, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return "", err
+	}
+	defer sftpClient.Close()
+
+	stat, err := sftpClient.Stat(path)
+	if err != nil {
+		return "", nil
+	}
+	return fmt.Sprintf("%04o", stat.Mode()), err
+}
+
+func (c *RemoteClient) ReadFilePermissionsShell(path string, sudo bool) (string, error) {
+
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
