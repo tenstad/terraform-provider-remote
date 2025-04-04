@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -132,6 +133,30 @@ func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
 }
 
 func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
+	if sudo {
+		return c.FileExistsShell(path, sudo)
+	}
+	return c.FileExistsSFTP(path)
+}
+
+func (c *RemoteClient) FileExistsSFTP(path string) (bool, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return false, err
+	}
+	defer sftpClient.Close()
+
+	_, err = sftpClient.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func (c *RemoteClient) FileExistsShell(path string, sudo bool) (bool, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
