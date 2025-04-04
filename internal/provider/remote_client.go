@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -104,6 +105,27 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 }
 
 func (c *RemoteClient) ChmodFile(path string, permissions string, sudo bool) error {
+	if sudo {
+		return c.ChmodFileShell(path, permissions, sudo)
+	}
+	return c.ChmodFileSFTP(path, permissions)
+}
+
+func (c *RemoteClient) ChmodFileSFTP(path string, permissions string) error {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	perm, err := strconv.ParseUint(permissions, 8, 32)
+	if err != nil {
+		return err
+	}
+	return sftpClient.Chmod(path, os.FileMode(perm))
+}
+
+func (c *RemoteClient) ChmodFileShell(path string, permissions string, sudo bool) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
