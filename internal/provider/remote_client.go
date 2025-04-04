@@ -47,7 +47,7 @@ func (c *RemoteClient) WriteFile(
 	if sudo {
 		return c.WriteFileShell(content, path)
 	}
-	return c.WriteFileSCP(ctx, content, path, permissions)
+	return c.WriteFileSFTP(ctx, content, path, permissions)
 }
 
 func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path string, permissions string) error {
@@ -58,6 +58,26 @@ func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path st
 	defer scpClient.Close()
 
 	return scpClient.CopyFile(ctx, strings.NewReader(content), path, permissions)
+}
+
+func (c *RemoteClient) WriteFileSFTP(_ context.Context, content string, path string, permissions string) error {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	file, err := sftpClient.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if _, err := file.Write([]byte(content)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *RemoteClient) WriteFileShell(content string, path string) error {
