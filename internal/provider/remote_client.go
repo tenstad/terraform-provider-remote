@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -46,7 +48,7 @@ func (c *RemoteClient) WriteFile(
 	if sudo {
 		return c.WriteFileShell(content, path)
 	}
-	return c.WriteFileSCP(ctx, content, path, permissions)
+	return c.WriteFileSFTP(ctx, content, path, permissions)
 }
 
 func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path string, permissions string) error {
@@ -57,6 +59,26 @@ func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path st
 	defer scpClient.Close()
 
 	return scpClient.CopyFile(ctx, strings.NewReader(content), path, permissions)
+}
+
+func (c *RemoteClient) WriteFileSFTP(_ context.Context, content string, path string, permissions string) error {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	file, err := sftpClient.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if _, err := file.Write([]byte(content)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *RemoteClient) WriteFileShell(content string, path string) error {
@@ -83,6 +105,27 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 }
 
 func (c *RemoteClient) ChmodFile(path string, permissions string, sudo bool) error {
+	if sudo {
+		return c.ChmodFileShell(path, permissions, sudo)
+	}
+	return c.ChmodFileSFTP(path, permissions)
+}
+
+func (c *RemoteClient) ChmodFileSFTP(path string, permissions string) error {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	perm, err := strconv.ParseUint(permissions, 8, 32)
+	if err != nil {
+		return err
+	}
+	return sftpClient.Chmod(path, os.FileMode(perm))
+}
+
+func (c *RemoteClient) ChmodFileShell(path string, permissions string, sudo bool) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -132,6 +175,30 @@ func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
 }
 
 func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
+	if sudo {
+		return c.FileExistsShell(path, sudo)
+	}
+	return c.FileExistsSFTP(path)
+}
+
+func (c *RemoteClient) FileExistsSFTP(path string) (bool, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return false, err
+	}
+	defer sftpClient.Close()
+
+	_, err = sftpClient.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func (c *RemoteClient) FileExistsShell(path string, sudo bool) (bool, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -209,6 +276,28 @@ func (c *RemoteClient) ReadFileShell(path string) (string, error) {
 }
 
 func (c *RemoteClient) ReadFilePermissions(path string, sudo bool) (string, error) {
+	if sudo {
+		return c.ReadFilePermissionsShell(path, sudo)
+	}
+	return c.ReadFilePermissionsSFTP(path)
+}
+
+func (c *RemoteClient) ReadFilePermissionsSFTP(path string) (string, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return "", err
+	}
+	defer sftpClient.Close()
+
+	stat, err := sftpClient.Stat(path)
+	if err != nil {
+		return "", nil
+	}
+	return fmt.Sprintf("%04o", stat.Mode()), err
+}
+
+func (c *RemoteClient) ReadFilePermissionsShell(path string, sudo bool) (string, error) {
+
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
