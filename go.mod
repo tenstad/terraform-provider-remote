@@ -1,6 +1,6 @@
 module github.com/tenstad/terraform-provider-remote
 
-go 1.22
+go 1.23
 
 require (
 	github.com/bramvdbogaerde/go-scp v1.5.0
