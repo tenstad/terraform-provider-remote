@@ -107,7 +107,7 @@ jobs:
       remotehost2:
         image: ghcr.io/tenstad/remotehost:${{ github.sha }}
     container:
-      image: golang:1.23
+      image: golang:1.24
     steps:
       - name: Install unzip
         run: apt-get update && apt-get install -y unzip
