@@ -27,7 +27,7 @@ var providerFactories = map[string]func() (*schema.Provider, error){
 					"port":     22,
 				},
 			}); err != nil {
-				return nil, diag.Errorf(err.Error())
+				return nil, diag.FromErr(err)
 			}
 			return configureProvider(c, rd)
 		}
@@ -45,7 +45,7 @@ var providerFactories = map[string]func() (*schema.Provider, error){
 					"port":     22,
 				},
 			}); err != nil {
-				return nil, diag.Errorf(err.Error())
+				return nil, diag.FromErr(err)
 			}
 			return configureProvider(c, rd)
 		}

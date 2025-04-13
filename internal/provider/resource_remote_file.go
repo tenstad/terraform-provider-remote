@@ -75,7 +75,7 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	if err := setResourceID(d, conn); err != nil {
-		return diag.Errorf(err.Error())
+		return diag.FromErr(err)
 	}
 
 	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
@@ -159,11 +159,11 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
-		return diag.Errorf(err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := setResourceID(d, conn); err != nil {
-		return diag.Errorf(err.Error())
+		return diag.FromErr(err)
 	}
 
 	client, err := meta.(*apiClient).getRemoteClient(ctx, conn)
@@ -211,7 +211,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 			return diag.Errorf("unable to read remote file: %s", err.Error())
 		}
 		if err := d.Set("content", content); err != nil {
-			return diag.Errorf(err.Error())
+			return diag.FromErr(err)
 		}
 
 		permissions, err := client.ReadFilePermissions(path, sudo)
@@ -219,7 +219,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 			return diag.Errorf("unable to read remote file permissions: %s", err.Error())
 		}
 		if err := d.Set("permissions", permissions); err != nil {
-			return diag.Errorf(err.Error())
+			return diag.FromErr(err)
 		}
 
 		if ownerOk {
@@ -228,7 +228,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("unable to read remote file owner: %s", err.Error())
 			}
 			if err := d.Set("owner", owner); err != nil {
-				return diag.Errorf(err.Error())
+				return diag.FromErr(err)
 			}
 		}
 		if ownerNameOk {
@@ -237,7 +237,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("unable to read remote file owner_name: %s", err.Error())
 			}
 			if err := d.Set("owner_name", ownerName); err != nil {
-				return diag.Errorf(err.Error())
+				return diag.FromErr(err)
 			}
 		}
 
@@ -247,7 +247,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("unable to read remote file group: %s", err.Error())
 			}
 			if err := d.Set("group", group); err != nil {
-				return diag.Errorf(err.Error())
+				return diag.FromErr(err)
 			}
 		}
 		if groupNameOk {
@@ -256,7 +256,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("unable to read remote file group_name: %s", err.Error())
 			}
 			if err := d.Set("group_name", groupName); err != nil {
-				return diag.Errorf(err.Error())
+				return diag.FromErr(err)
 			}
 		}
 	} else {
