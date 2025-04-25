@@ -46,7 +46,7 @@ func (c *RemoteClient) WriteFile(
 	ctx context.Context, content string, path string, permissions string, sudo bool,
 ) error {
 	if sudo {
-		return c.WriteFileShell(content, path)
+		return c.WriteFileShell(content, path, permissions)
 	}
 	return c.WriteFileSFTP(ctx, content, path, permissions)
 }
@@ -62,6 +62,10 @@ func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path st
 }
 
 func (c *RemoteClient) WriteFileSFTP(_ context.Context, content string, path string, permissions string) error {
+	perm, err := strconv.ParseUint(permissions, 8, 32)
+	if err != nil {
+		return err
+	}
 	sftpClient, err := c.GetSFTPClient()
 	if err != nil {
 		return err
@@ -74,6 +78,11 @@ func (c *RemoteClient) WriteFileSFTP(_ context.Context, content string, path str
 	}
 	defer file.Close()
 
+	err = sftpClient.Chmod(path, os.FileMode(perm))
+	if err != nil {
+		return err
+	}
+
 	if _, err := file.Write([]byte(content)); err != nil {
 		return err
 	}
@@ -81,7 +90,7 @@ func (c *RemoteClient) WriteFileSFTP(_ context.Context, content string, path str
 	return nil
 }
 
-func (c *RemoteClient) WriteFileShell(content string, path string) error {
+func (c *RemoteClient) WriteFileShell(content string, path string, permissions string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -100,7 +109,19 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 		stdin.Close()
 	}()
 
-	cmd := fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
+	cmd := fmt.Sprintf("sudo touch %s", path)
+	err = run(session, cmd)
+	if err != nil {
+		return err
+	}
+
+	cmd = fmt.Sprintf("sudo chmod %s %s", permissions, path)
+	err = run(session, cmd)
+	if err != nil {
+		return err
+	}
+
+	cmd = fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
 	return run(session, cmd)
 }
 
