@@ -318,7 +318,6 @@ func (c *RemoteClient) ReadFilePermissionsSFTP(path string) (string, error) {
 }
 
 func (c *RemoteClient) ReadFilePermissionsShell(path string, sudo bool) (string, error) {
-
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
