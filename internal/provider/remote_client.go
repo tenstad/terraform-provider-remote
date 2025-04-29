@@ -99,16 +99,6 @@ func (c *RemoteClient) WriteFileShell(content string, path string, permissions s
 	}
 	defer session.Close()
 
-	stdin, err := session.StdinPipe()
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		_, _ = stdin.Write([]byte(content))
-		stdin.Close()
-	}()
-
 	cmd := fmt.Sprintf("sudo touch %s", path)
 	err = run(session, cmd)
 	if err != nil {
@@ -120,6 +110,16 @@ func (c *RemoteClient) WriteFileShell(content string, path string, permissions s
 	if err != nil {
 		return err
 	}
+
+	stdin, err := session.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		_, _ = stdin.Write([]byte(content))
+		stdin.Close()
+	}()
 
 	cmd = fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
 	return run(session, cmd)
