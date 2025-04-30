@@ -100,13 +100,13 @@ func (c *RemoteClient) WriteFileShell(content string, path string, permissions s
 	defer session.Close()
 
 	cmd := fmt.Sprintf("sudo touch %s", path)
-	err = run(session, cmd)
+	err = c.run(cmd)
 	if err != nil {
 		return err
 	}
 
 	cmd = fmt.Sprintf("sudo chmod %s %s", permissions, path)
-	err = run(session, cmd)
+	err = c.run(cmd)
 	if err != nil {
 		return err
 	}
