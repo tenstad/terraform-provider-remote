@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -54,9 +56,9 @@ func (c *RemoteClient) WriteFile(
 	ctx context.Context, content string, path string, permissions string, sudo bool,
 ) error {
 	if sudo {
-		return c.WriteFileShell(content, path)
+		return c.WriteFileShell(content, path, permissions)
 	}
-	return c.WriteFileSCP(ctx, content, path, permissions)
+	return c.WriteFileSFTP(ctx, content, path, permissions)
 }
 
 func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path string, permissions string) error {
@@ -69,7 +71,36 @@ func (c *RemoteClient) WriteFileSCP(ctx context.Context, content string, path st
 	return scpClient.CopyFile(ctx, strings.NewReader(content), path, permissions)
 }
 
-func (c *RemoteClient) WriteFileShell(content string, path string) error {
+func (c *RemoteClient) WriteFileSFTP(_ context.Context, content string, path string, permissions string) error {
+	perm, err := strconv.ParseUint(permissions, 8, 32)
+	if err != nil {
+		return err
+	}
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	file, err := sftpClient.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	err = sftpClient.Chmod(path, os.FileMode(perm))
+	if err != nil {
+		return err
+	}
+
+	if _, err := file.Write([]byte(content)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *RemoteClient) WriteFileShell(content string, path string, permissions string) error {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
@@ -77,6 +108,18 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 		return err
 	}
 	defer session.Close()
+
+	cmd := fmt.Sprintf("sudo touch %s", path)
+	err = c.run(cmd)
+	if err != nil {
+		return err
+	}
+
+	cmd = fmt.Sprintf("sudo chmod %s %s", permissions, path)
+	err = c.run(cmd)
+	if err != nil {
+		return err
+	}
 
 	stdin, err := session.StdinPipe()
 	if err != nil {
@@ -88,11 +131,32 @@ func (c *RemoteClient) WriteFileShell(content string, path string) error {
 		stdin.Close()
 	}()
 
-	cmd := fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
+	cmd = fmt.Sprintf("cat /dev/stdin | sudo tee %s", path)
 	return run(session, cmd)
 }
 
 func (c *RemoteClient) ChmodFile(path string, permissions string, sudo bool) error {
+	if sudo {
+		return c.ChmodFileShell(path, permissions, sudo)
+	}
+	return c.ChmodFileSFTP(path, permissions)
+}
+
+func (c *RemoteClient) ChmodFileSFTP(path string, permissions string) error {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer sftpClient.Close()
+
+	perm, err := strconv.ParseUint(permissions, 8, 32)
+	if err != nil {
+		return err
+	}
+	return sftpClient.Chmod(path, os.FileMode(perm))
+}
+
+func (c *RemoteClient) ChmodFileShell(path string, permissions string, sudo bool) error {
 	cmd := fmt.Sprintf("chmod %s %s", permissions, path)
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
@@ -118,6 +182,30 @@ func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
 }
 
 func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
+	if sudo {
+		return c.FileExistsShell(path, sudo)
+	}
+	return c.FileExistsSFTP(path)
+}
+
+func (c *RemoteClient) FileExistsSFTP(path string) (bool, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return false, err
+	}
+	defer sftpClient.Close()
+
+	_, err = sftpClient.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func (c *RemoteClient) FileExistsShell(path string, sudo bool) (bool, error) {
 	cmd := fmt.Sprintf("test -f %s", path)
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
@@ -181,6 +269,27 @@ func (c *RemoteClient) ReadFileShell(path string) (string, error) {
 }
 
 func (c *RemoteClient) ReadFilePermissions(path string, sudo bool) (string, error) {
+	if sudo {
+		return c.ReadFilePermissionsShell(path, sudo)
+	}
+	return c.ReadFilePermissionsSFTP(path)
+}
+
+func (c *RemoteClient) ReadFilePermissionsSFTP(path string) (string, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return "", err
+	}
+	defer sftpClient.Close()
+
+	stat, err := sftpClient.Stat(path)
+	if err != nil {
+		return "", nil
+	}
+	return fmt.Sprintf("%04o", stat.Mode()), err
+}
+
+func (c *RemoteClient) ReadFilePermissionsShell(path string, sudo bool) (string, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()

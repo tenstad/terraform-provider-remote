@@ -129,8 +129,10 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		owner = o
 	}
 
-	if err := client.WriteFile(ctx, content, path, permissions, sudo); err != nil {
-		return diag.Errorf("unable to create remote file: %s", err.Error())
+	if d.HasChange("content") {
+		if err := client.WriteFile(ctx, content, path, permissions, sudo); err != nil {
+			return diag.Errorf("unable to create remote file: %s", err.Error())
+		}
 	}
 
 	if err := client.ChmodFile(path, permissions, sudo); err != nil {
