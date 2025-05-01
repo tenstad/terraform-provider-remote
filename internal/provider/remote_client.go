@@ -38,6 +38,16 @@ func run(s *ssh.Session, cmd string) error {
 	return nil
 }
 
+func (c *RemoteClient) run(cmd string) error {
+	session, err := c.GetSSHClient().NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	return run(session, cmd)
+}
+
 type RemoteClient struct {
 	sshClient *ssh.Client
 }
@@ -147,52 +157,28 @@ func (c *RemoteClient) ChmodFileSFTP(path string, permissions string) error {
 }
 
 func (c *RemoteClient) ChmodFileShell(path string, permissions string, sudo bool) error {
-	sshClient := c.GetSSHClient()
-
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return err
-	}
-	defer session.Close()
-
 	cmd := fmt.Sprintf("chmod %s %s", permissions, path)
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
-	return run(session, cmd)
+	return c.run(cmd)
 }
 
 func (c *RemoteClient) ChgrpFile(path string, group string, sudo bool) error {
-	sshClient := c.GetSSHClient()
-
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return err
-	}
-	defer session.Close()
-
 	cmd := fmt.Sprintf("chgrp %s %s", group, path)
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
 
-	return run(session, cmd)
+	return c.run(cmd)
 }
 
 func (c *RemoteClient) ChownFile(path string, owner string, sudo bool) error {
-	sshClient := c.GetSSHClient()
-
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return err
-	}
-	defer session.Close()
-
 	cmd := fmt.Sprintf("chown %s %s", owner, path)
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
-	return run(session, cmd)
+	return c.run(cmd)
 }
 
 func (c *RemoteClient) FileExists(path string, sudo bool) (bool, error) {
@@ -220,31 +206,17 @@ func (c *RemoteClient) FileExistsSFTP(path string) (bool, error) {
 }
 
 func (c *RemoteClient) FileExistsShell(path string, sudo bool) (bool, error) {
-	sshClient := c.GetSSHClient()
-
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return false, err
-	}
-	defer session.Close()
-
 	cmd := fmt.Sprintf("test -f %s", path)
 	if sudo {
 		cmd = fmt.Sprintf("sudo %s", cmd)
 	}
 
-	if err := run(session, cmd); err != nil {
-		session2, err := sshClient.NewSession()
-		if err != nil {
-			return false, err
-		}
-		defer session2.Close()
-
+	if err := c.run(cmd); err != nil {
 		cmd := fmt.Sprintf("test ! -f %s", path)
 		if sudo {
 			cmd = fmt.Sprintf("sudo %s", cmd)
 		}
-		return false, session2.Run(cmd)
+		return false, c.run(cmd)
 	}
 
 	return true, nil
@@ -398,16 +370,8 @@ func (c *RemoteClient) DeleteFileSFTP(path string) error {
 }
 
 func (c *RemoteClient) DeleteFileShell(path string) error {
-	sshClient := c.GetSSHClient()
-
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return err
-	}
-	defer session.Close()
-
 	cmd := fmt.Sprintf("sudo rm %s", path)
-	return run(session, cmd)
+	return c.run(cmd)
 }
 
 func NewRemoteClient(host string, clientConfig *ssh.ClientConfig) (*RemoteClient, error) {
