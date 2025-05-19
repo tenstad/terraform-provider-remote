@@ -61,6 +61,12 @@ var connectionSchemaResource = &schema.Resource{
 			Sensitive:   true,
 			Description: "The private key used to login to the remote host.",
 		},
+		"private_key_pass": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Sensitive:   true,
+			Description: "Passphrase for the encrypted private key.",
+		},
 		"private_key_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -112,7 +118,7 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 			return "", nil, err
 		}
 
-		signer, err := ssh.ParsePrivateKey([]byte(privateKey))
+		signer, err := parsePrivateKey(d, privateKey)
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't create a ssh client config from private key: %s", err.Error())
 		}
@@ -128,7 +134,7 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't read private key: %s", err.Error())
 		}
-		signer, err := ssh.ParsePrivateKey(content)
+		signer, err := parsePrivateKey(d, string(content))
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't create a ssh client config from private key file: %s", err.Error())
 		}
@@ -140,8 +146,8 @@ func ConnectionFromResourceData(ctx context.Context, d *schema.ResourceData) (st
 			return "", nil, err
 		}
 
-		content := []byte(os.Getenv(privateKeyEnvVar))
-		signer, err := ssh.ParsePrivateKey(content)
+		content := os.Getenv(privateKeyEnvVar)
+		signer, err := parsePrivateKey(d, content)
 		if err != nil {
 			return "", nil, fmt.Errorf("couldn't create a ssh client config from private key env var: %s", err.Error())
 		}

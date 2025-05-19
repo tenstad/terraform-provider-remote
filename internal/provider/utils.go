@@ -37,6 +37,21 @@ func GetOk[T any](d *schema.ResourceData, key string) (T, bool, error) {
 	return t, true, fmt.Errorf("%w: %s to %T: %v", errTypecast, key, t, raw)
 }
 
+func parsePrivateKey(d *schema.ResourceData, privateKey string) (ssh.Signer, error) {
+	privateKeyPass, ok, err := GetOk[string](d, "conn.0.private_key_pass")
+	if ok {
+		if err != nil {
+			return nil, err
+		}
+		return ssh.ParsePrivateKeyWithPassphrase([]byte(privateKey), []byte(privateKeyPass))
+	}
+	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
+	if _, ok := err.(*ssh.PassphraseMissingError); ok {
+		return nil, fmt.Errorf("private key is encrypted, password required but not supplied")
+	}
+	return signer, err
+}
+
 func writeFileToHost(host string, filename string, content string, group string, user string) {
 	sshClient, err := ssh.Dial("tcp", host, &ssh.ClientConfig{
 		User:            "root",
