@@ -68,7 +68,7 @@ func resourceRemoteFile() *schema.Resource {
 	}
 }
 
-func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) (error diag.Diagnostics) {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
@@ -82,6 +82,11 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
+	defer func() {
+		if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
+			error = append(error, diag.Errorf("unable to close remote client: %s", err.Error())...)
+		}
+	}()
 
 	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
 	if err != nil {
@@ -151,14 +156,10 @@ func resourceRemoteFileCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
-		return diag.Errorf("unable to close remote client: %s", err.Error())
-	}
-
 	return diag.Diagnostics{}
 }
 
-func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (error diag.Diagnostics) {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -172,6 +173,11 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
+	defer func() {
+		if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
+			error = append(error, diag.Errorf("unable to close remote client: %s", err.Error())...)
+		}
+	}()
 
 	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
 	if err != nil {
@@ -265,10 +271,6 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		d.SetId("")
 	}
 
-	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
-		return diag.Errorf("unable to close remote client: %s", err.Error())
-	}
-
 	return diag.Diagnostics{}
 }
 
@@ -276,7 +278,7 @@ func resourceRemoteFileUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	return resourceRemoteFileCreate(ctx, d, meta)
 }
 
-func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) (error diag.Diagnostics) {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.Diagnostics{{Severity: diag.Error, Summary: err.Error()}}
@@ -286,6 +288,11 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
+	defer func() {
+		if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
+			error = append(error, diag.Errorf("unable to close remote client: %s", err.Error())...)
+		}
+	}()
 
 	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
 	if err != nil {
@@ -305,10 +312,6 @@ func resourceRemoteFileDelete(ctx context.Context, d *schema.ResourceData, meta 
 		if err := client.DeleteFile(path, sudo); err != nil {
 			return diag.Errorf("unable to delete remote file: %s", err.Error())
 		}
-	}
-
-	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
-		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 
 	return diag.Diagnostics{}
