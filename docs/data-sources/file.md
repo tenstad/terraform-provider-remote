@@ -73,6 +73,7 @@ Optional:
 - `port` (Number) The ssh port on the remote host. Defaults to `22`.
 - `private_key` (String, Sensitive) The private key used to login to the remote host.
 - `private_key_env_var` (String) The name of the local environment variable containing the private key used to login to the remote host.
+- `private_key_pass` (String, Sensitive) Passphrase for the encrypted private key.
 - `private_key_path` (String) The local path to the private key used to login to the remote host.
 - `sudo` (Boolean) Use sudo to gain access to file. Defaults to `false`.
 - `timeout` (Number) The maximum amount of time, in milliseconds, for the TCP connection to establish. Timeout of zero means no timeout.
