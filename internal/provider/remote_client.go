@@ -3,6 +3,7 @@ package provider
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -315,22 +316,81 @@ func (c *RemoteClient) ReadFilePermissionsShell(path string, sudo bool) (string,
 }
 
 func (c *RemoteClient) ReadFileOwner(path string, sudo bool) (string, error) {
-	return c.StatFile(path, "u", sudo)
+	if sudo {
+		return c.StatFileShell(path, "u", sudo)
+	}
+	return c.StatFileSFTP(path, "u")
 }
 
 func (c *RemoteClient) ReadFileGroup(path string, sudo bool) (string, error) {
-	return c.StatFile(path, "g", sudo)
+	if sudo {
+		return c.StatFileShell(path, "g", sudo)
+	}
+	return c.StatFileSFTP(path, "g")
 }
 
 func (c *RemoteClient) ReadFileOwnerName(path string, sudo bool) (string, error) {
-	return c.StatFile(path, "U", sudo)
+	return c.StatFileShell(path, "U", sudo)
 }
 
 func (c *RemoteClient) ReadFileGroupName(path string, sudo bool) (string, error) {
-	return c.StatFile(path, "G", sudo)
+	return c.StatFileShell(path, "G", sudo)
+}
+
+func (c *RemoteClient) ReadFileModTime(path string, sudo bool) (string, error) {
+	if sudo {
+		return c.StatFileShell(path, "Z", sudo)
+	}
+	return c.StatFileSFTP(path, "Z")
 }
 
 func (c *RemoteClient) StatFile(path string, char string, sudo bool) (string, error) {
+	if sudo {
+		return c.StatFileShell(path, char, sudo)
+	}
+	return c.StatFileSFTP(path, char)
+}
+
+func (c *RemoteClient) StatFileSFTP(path string, char string) (string, error) {
+	sftpClient, err := c.GetSFTPClient()
+	if err != nil {
+		return "", err
+	}
+	defer sftpClient.Close()
+
+	stat, err := sftpClient.Stat(path)
+	if err != nil {
+		return "", nil
+	}
+	fiExt, ok := stat.Sys().(*sftp.FileStat)
+	if !ok {
+		return "", errors.New("cannot convert FileStat")
+	}
+	switch char {
+	case "a":
+		return fmt.Sprintf("%04o", stat.Mode()), nil
+	case "A":
+		return stat.Mode().String(), nil
+	case "u":
+		return strconv.FormatUint(uint64(fiExt.UID), 10), nil
+	case "g":
+		return strconv.FormatUint(uint64(fiExt.GID), 10), nil
+	case "s":
+		return strconv.FormatInt(stat.Size(), 10), nil
+	case "x":
+		return fiExt.AccessTime().String(), nil
+	case "X":
+		return strconv.FormatInt(fiExt.ModTime().Unix(), 10), nil
+	case "z":
+		return fiExt.ModTime().String(), nil
+	case "Z":
+		return strconv.FormatInt(fiExt.ModTime().Unix(), 10), nil
+	default:
+		return "", errors.New("not implemented")
+	}
+}
+
+func (c *RemoteClient) StatFileShell(path string, char string, sudo bool) (string, error) {
 	sshClient := c.GetSSHClient()
 
 	session, err := sshClient.NewSession()
