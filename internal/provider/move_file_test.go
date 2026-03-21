@@ -2,7 +2,6 @@ package provider
 
 import (
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -54,8 +53,8 @@ func TestMovingFileByModifyingProvider(t *testing.T) {
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"data.remote_file.move_file", "content", regexp.MustCompile("x")),
+					resource.TestCheckResourceAttr(
+						"data.remote_file.move_file", "content", hashString("x")),
 				),
 			},
 		},
@@ -119,8 +118,10 @@ func TestMovingFileByModifyingConn(t *testing.T) {
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"data.remote_file.move_file_2", "content", regexp.MustCompile("x")),
+					resource.TestCheckResourceAttr(
+						"remote_file.move_file_2", "content", hashString("x")),
+					resource.TestCheckResourceAttr(
+						"data.remote_file.move_file_2", "content", "x"),
 				),
 			},
 		},

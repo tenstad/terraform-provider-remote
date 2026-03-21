@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
@@ -231,4 +233,15 @@ func resourceConnectionHash(d *schema.ResourceData) (string, error) {
 		strconv.FormatBool(agent),
 	}
 	return strings.Join(elements, "::"), nil
+}
+
+// hashString returns a hash of the input for use as a StateFunc
+func hashString(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		hash := sha1.Sum([]byte(val)) // nolint: gosec
+		return hex.EncodeToString(hash[:])
+	default:
+		return ""
+	}
 }

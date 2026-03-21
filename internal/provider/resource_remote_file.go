@@ -35,6 +35,7 @@ func resourceRemoteFile() *schema.Resource {
 				Description: "Content of file.",
 				Type:        schema.TypeString,
 				Required:    true,
+				StateFunc:   hashString,
 			},
 			"permissions": {
 				Description: "Permissions of file (in octal form).",
@@ -218,7 +219,7 @@ func resourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta in
 		if err != nil {
 			return diag.Errorf("unable to read remote file: %s", err.Error())
 		}
-		if err := d.Set("content", content); err != nil {
+		if err := d.Set("content", hashString(content)); err != nil {
 			return diag.FromErr(err)
 		}
 

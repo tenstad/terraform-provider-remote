@@ -29,8 +29,8 @@ func TestAccResourceRemoteFile(t *testing.T) {
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"remote_file.resource_1", "content", regexp.MustCompile("resource_1")),
+					resource.TestCheckResourceAttr(
+						"remote_file.resource_1", "content", hashString("resource_1")),
 				),
 			},
 		},
@@ -54,8 +54,8 @@ func TestAccResourceRemoteFileWithDefaultConnection(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(
 						"remote_file.resource_2", "id", regexp.MustCompile("remotehost:22:/tmp/resource_2.txt")),
-					resource.TestMatchResourceAttr(
-						"remote_file.resource_2", "content", regexp.MustCompile("resource_2")),
+					resource.TestCheckResourceAttr(
+						"remote_file.resource_2", "content", hashString("resource_2")),
 				),
 			},
 		},
@@ -84,8 +84,8 @@ func TestAccResourceRemoteFileWithAgent(t *testing.T) {
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"remote_file.resource_3", "content", regexp.MustCompile("resource_3")),
+					resource.TestCheckResourceAttr(
+						"remote_file.resource_3", "content", hashString("resource_3")),
 				),
 			},
 		},
