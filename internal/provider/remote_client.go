@@ -2,6 +2,7 @@ package provider
 
 import (
 	"bytes"
+	"errors"
 	"context"
 	"fmt"
 	"os"
@@ -202,6 +203,14 @@ func (c *RemoteClient) FileExistsSFTP(path string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
+	// If the error is an SFTP status error and its Code is 10, treat as "not exists"
+	var se *sftp.StatusError
+	if errors.As(err, &se) {
+		if se.Code == 10 /* sftp.sshFxNoSuchPath */ {
+			return false, nil
+		}
+	}
+
 	return false, err
 }
 
