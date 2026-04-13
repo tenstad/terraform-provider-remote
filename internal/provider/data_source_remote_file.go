@@ -61,7 +61,7 @@ func dataSourceRemoteFile() *schema.Resource {
 	}
 }
 
-func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) (error diag.Diagnostics) {
 	conn, err := meta.(*apiClient).getConnWithDefault(d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -75,6 +75,11 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("unable to open remote client: %s", err.Error())
 	}
+	defer func() {
+		if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
+			error = append(error, diag.Errorf("unable to close remote client: %s", err.Error())...)
+		}
+	}()
 
 	sudo, _, err := GetOk[bool](conn, "conn.0.sudo")
 	if err != nil {
@@ -140,10 +145,6 @@ func dataSourceRemoteFileRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	if err := d.Set("group_name", groupName); err != nil {
 		return diag.FromErr(err)
-	}
-
-	if err := meta.(*apiClient).closeRemoteClient(conn); err != nil {
-		return diag.Errorf("unable to close remote client: %s", err.Error())
 	}
 
 	return diag.Diagnostics{}
